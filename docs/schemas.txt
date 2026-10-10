@@ -1,0 +1,12 @@
+tpep_pickup_datetime {'timestamp[us]': '60 ficheiros (ex: 2016-01)'}
+tpep_dropoff_datetime {'timestamp[us]': '60 ficheiros (ex: 2016-01)'}
+PULocationID {'int64': '60 ficheiros (ex: 2016-01)'}
+DOLocationID {'int64': '60 ficheiros (ex: 2016-01)'}
+passenger_count {'int64': '30 ficheiros (ex: 2016-01)', 'double': '30 ficheiros (ex: 2018-07)'}
+trip_distance {'double': '60 ficheiros (ex: 2016-01)'}
+RatecodeID {'int64': '30 ficheiros (ex: 2016-01)', 'double': '30 ficheiros (ex: 2018-07)'}
+payment_type {'int64': '60 ficheiros (ex: 2016-01)'}
+fare_amount {'double': '60 ficheiros (ex: 2016-01)'}
+tip_amount {'double': '60 ficheiros (ex: 2016-01)'}
+total_amount {'double': '60 ficheiros (ex: 2016-01)'}
+linhas totais: 456751055

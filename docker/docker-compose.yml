@@ -1,0 +1,27 @@
+# Cluster local do projeto, no mesmo modelo do Lab 03 (compar-spark-docker):
+# 1 master + N workers; o driver corre dentro do spark-master via spark-submit.
+# Arranque: cd docker && docker compose up -d --scale spark-worker=3
+services:
+  spark-master:
+    image: spark:4.2.0-python3
+    container_name: spark-master
+    user: root
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_HISTORY_OPTS: "-Dspark.history.fs.logDirectory=/project/results/spark-events"
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+      - "4040-4045:4040-4045"
+      - "18080:18080"
+    volumes:
+      - ../:/project
+  spark-worker:
+    image: spark:4.2.0-python3
+    user: root
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077 --cores 2 --memory 3G
+    depends_on: [spark-master]
+    volumes:
+      - ../:/project
