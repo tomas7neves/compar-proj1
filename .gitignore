@@ -1,0 +1,12 @@
+cat > .gitignore <<'EOF'
+data/
+output/
+build/
+results/spark-events/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+report/*.aux
+report/*.log
+report/*.out
+EOF
