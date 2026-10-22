@@ -8,3 +8,5 @@ __pycache__/
 report/*.aux
 report/*.log
 report/*.out
+docs/para-o-hugo.md
+docs/notas-tomas.md
