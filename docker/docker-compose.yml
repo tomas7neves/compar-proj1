@@ -1,6 +1,7 @@
 # Cluster local do projeto, no mesmo modelo do Lab 03 (compar-spark-docker):
 # 1 master + N workers; o driver corre dentro do spark-master via spark-submit.
 # Arranque: cd docker && docker compose up -d --scale spark-worker=3
+# Jupyter (só para desenvolver, não durante medições): docker compose --profile dev up -d jupyter
 services:
   spark-master:
     image: spark:4.2.0-python3
@@ -21,7 +22,24 @@ services:
     user: root
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
-      spark://spark-master:7077 --cores 2 --memory 3G
+      spark://spark-master:7077 --cores 2 --memory 1500M
     depends_on: [spark-master]
     volumes:
       - ../:/project
+  jupyter:
+    profiles: [dev]
+    build: {context: ., dockerfile: Dockerfile.jupyter}
+    container_name: compar-jupyter
+    user: root
+    environment:
+      JUPYTER_CONFIG_DIR: /tmp/jupyter
+      JUPYTER_RUNTIME_DIR: /tmp/jupyter/runtime
+      JUPYTER_DATA_DIR: /tmp/jupyter/data
+      JUPYTER_TOKEN: spark123
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --notebook-dir=/project
+    ports:
+      - "8888:8888"
+      - "4050:4040"
+    volumes:
+      - ../:/project
+    depends_on: [spark-master]

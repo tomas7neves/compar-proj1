@@ -1,4 +1,3 @@
-cat > .gitignore <<'EOF'
 data/
 output/
 build/
@@ -9,4 +8,3 @@ __pycache__/
 report/*.aux
 report/*.log
 report/*.out
-EOF
