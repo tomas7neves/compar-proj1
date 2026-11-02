@@ -4,6 +4,8 @@
 from pyspark.sql import Window, functions as F
 from taxi import m1_clean as m1
 
+MIN_MEAN = 30       # só há alerta se a zona tiver em média >= 30 viagens/mês nos 3 meses anteriores
+
 
 def run(trips, zones, a, opt):
     # 1) zona e borough de recolha
@@ -41,9 +43,11 @@ def run(trips, zones, a, opt):
                                                  F.sum("trip_count").over(borough_3m)))
             .withColumn("rolling_mean", F.avg("trip_count").over(zone_prev))
             .withColumn("rolling_std", F.stddev("trip_count").over(zone_prev))
-            # null (menos de 2 meses anteriores) -> False, como no M1
+            # null (menos de 2 meses anteriores) -> False, como no M1.
+            # Volume mínimo: em zonas quase vazias o σ é ~0 e qualquer variação dava alerta (decisão do grupo)
             .withColumn("volume_anomaly", F.coalesce(
-                F.abs(F.col("trip_count") - F.col("rolling_mean")) > 1.5 * F.col("rolling_std"),
+                (F.abs(F.col("trip_count") - F.col("rolling_mean")) > 1.5 * F.col("rolling_std"))
+                & (F.col("rolling_mean") >= MIN_MEAN),
                 F.lit(False)))
             .drop("m_idx"))
 
