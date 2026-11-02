@@ -1,0 +1,321 @@
+== Physical Plan ==
+AdaptiveSparkPlan (57)
++- Project (56)
+   +- Window (55)
+      +- Project (54)
+         +- Window (53)
+            +- Sort (52)
+               +- Exchange (51)
+                  +- Project (50)
+                     +- Window (49)
+                        +- Sort (48)
+                           +- Exchange (47)
+                              +- Window (46)
+                                 +- Sort (45)
+                                    +- Exchange (44)
+                                       +- Window (43)
+                                          +- Sort (42)
+                                             +- Exchange (41)
+                                                +- Project (40)
+                                                   +- SortMergeJoin LeftOuter (39)
+                                                      :- Sort (8)
+                                                      :  +- Exchange (7)
+                                                      :     +- BroadcastNestedLoopJoin Cross BuildLeft (6)
+                                                      :        :- BroadcastExchange (4)
+                                                      :        :  +- Project (3)
+                                                      :        :     +- Filter (2)
+                                                      :        :        +- Scan csv  (1)
+                                                      :        +- Scan ExistingRDD (5)
+                                                      +- Sort (38)
+                                                         +- Exchange (37)
+                                                            +- HashAggregate (36)
+                                                               +- Exchange (35)
+                                                                  +- HashAggregate (34)
+                                                                     +- Project (33)
+                                                                        +- BroadcastHashJoin Inner BuildRight (32)
+                                                                           :- Union (27)
+                                                                           :  :- Project (11)
+                                                                           :  :  +- Filter (10)
+                                                                           :  :     +- Scan parquet  (9)
+                                                                           :  :- Project (14)
+                                                                           :  :  +- Filter (13)
+                                                                           :  :     +- Scan parquet  (12)
+                                                                           :  :- Project (17)
+                                                                           :  :  +- Filter (16)
+                                                                           :  :     +- Scan parquet  (15)
+                                                                           :  :- Project (20)
+                                                                           :  :  +- Filter (19)
+                                                                           :  :     +- Scan parquet  (18)
+                                                                           :  :- Project (23)
+                                                                           :  :  +- Filter (22)
+                                                                           :  :     +- Scan parquet  (21)
+                                                                           :  +- Project (26)
+                                                                           :     +- Filter (25)
+                                                                           :        +- Scan parquet  (24)
+                                                                           +- BroadcastExchange (31)
+                                                                              +- Project (30)
+                                                                                 +- Filter (29)
+                                                                                    +- Scan csv  (28)
+
+
+(1) Scan csv 
+Output [3]: [LocationID#0, Borough#1, Zone#2]
+Batched: false
+Location: InMemoryFileIndex [file:/project/data/sintetico/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID), GreaterThanOrEqual(LocationID,1), LessThanOrEqual(LocationID,263)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(2) Filter
+Input [3]: [LocationID#0, Borough#1, Zone#2]
+Condition : ((isnotnull(LocationID#0) AND (LocationID#0 >= 1)) AND (LocationID#0 <= 263))
+
+(3) Project
+Output [3]: [LocationID#0 AS PULocationID#213, Zone#2 AS zone#214, Borough#1 AS borough#215]
+Input [3]: [LocationID#0, Borough#1, Zone#2]
+
+(4) BroadcastExchange
+Input [3]: [PULocationID#213, zone#214, borough#215]
+Arguments: IdentityBroadcastMode, [plan_id=1931]
+
+(5) Scan ExistingRDD
+Output [2]: [year#274, month#275]
+Arguments: [year#274, month#275], MapPartitionsRDD[41] at applySchemaToPythonRDD at DirectMethodHandleAccessor.java:103, ExistingRDD, UnknownPartitioning(0)
+
+(6) BroadcastNestedLoopJoin
+Join type: Cross
+Join condition: None
+
+(7) Exchange
+Input [5]: [PULocationID#213, zone#214, borough#215, year#274, month#275]
+Arguments: hashpartitioning(PULocationID#213, year#274, month#275, 200), ENSURE_REQUIREMENTS, [plan_id=1942]
+
+(8) Sort
+Input [5]: [PULocationID#213, zone#214, borough#215, year#274, month#275]
+Arguments: [PULocationID#213 ASC NULLS FIRST, year#274 ASC NULLS FIRST, month#275 ASC NULLS FIRST], false, 0
+
+(9) Scan parquet 
+Output [9]: [tpep_pickup_datetime#4, tpep_dropoff_datetime#5, PULocationID#6L, DOLocationID#7L, passenger_count#8L, trip_distance#9, fare_amount#12, tip_amount#13, total_amount#14]
+Batched: true
+Location: InMemoryFileIndex [file:/project/data/sintetico/raw/yellow_tripdata_2019-01.parquet]
+PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(trip_distance), IsNotNull(fare_amount), IsNotNull(tip_amount), IsNotNull(total_amount)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:bigint,DOLocationID:bigint,passenger_count:bigint,trip_distance:double,fare_amount:double,tip_amount:double,total_amount:double>
+
+(10) Filter
+Input [9]: [tpep_pickup_datetime#4, tpep_dropoff_datetime#5, PULocationID#6L, DOLocationID#7L, passenger_count#8L, trip_distance#9, fare_amount#12, tip_amount#13, total_amount#14]
+Condition : ((((((((((((((((((isnotnull(PULocationID#6L) AND isnotnull(DOLocationID#7L)) AND isnotnull(passenger_count#8L)) AND isnotnull(tpep_pickup_datetime#4)) AND isnotnull(tpep_dropoff_datetime#5)) AND isnotnull(cast(PULocationID#6L as int))) AND isnotnull(cast(DOLocationID#7L as int))) AND isnotnull(cast(passenger_count#8L as int))) AND isnotnull(trip_distance#9)) AND isnotnull(fare_amount#12)) AND isnotnull(tip_amount#13)) AND isnotnull(total_amount#14)) AND NOT coalesce((fare_amount#12 <= 0.0), false)) AND NOT coalesce((trip_distance#9 <= 0.0), false)) AND NOT coalesce(((cast(passenger_count#8L as int) = 0) OR (cast(passenger_count#8L as int) > 6)), false)) AND NOT coalesce((tpep_dropoff_datetime#5 <= tpep_pickup_datetime#4), false)) AND NOT coalesce((((cast(PULocationID#6L as int) < 1) OR (cast(PULocationID#6L as int) > 263)) OR ((cast(DOLocationID#7L as int) < 1) OR (cast(DOLocationID#7L as int) > 263))), false)) AND (cast(PULocationID#6L as int) >= 1)) AND (cast(PULocationID#6L as int) <= 263))
+
+(11) Project
+Output [5]: [cast(PULocationID#6L as int) AS PULocationID#17, trip_distance#9 AS trip_distance#20, fare_amount#12 AS fare_amount#23, 2019 AS year#26, 1 AS month#27]
+Input [9]: [tpep_pickup_datetime#4, tpep_dropoff_datetime#5, PULocationID#6L, DOLocationID#7L, passenger_count#8L, trip_distance#9, fare_amount#12, tip_amount#13, total_amount#14]
+
+(12) Scan parquet 
+Output [9]: [tpep_pickup_datetime#29, tpep_dropoff_datetime#30, PULocationID#31L, DOLocationID#32L, passenger_count#33L, trip_distance#34, fare_amount#37, tip_amount#38, total_amount#39]
+Batched: true
+Location: InMemoryFileIndex [file:/project/data/sintetico/raw/yellow_tripdata_2019-02.parquet]
+PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(trip_distance), IsNotNull(fare_amount), IsNotNull(tip_amount), IsNotNull(total_amount)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:bigint,DOLocationID:bigint,passenger_count:bigint,trip_distance:double,fare_amount:double,tip_amount:double,total_amount:double>
+
+(13) Filter
+Input [9]: [tpep_pickup_datetime#29, tpep_dropoff_datetime#30, PULocationID#31L, DOLocationID#32L, passenger_count#33L, trip_distance#34, fare_amount#37, tip_amount#38, total_amount#39]
+Condition : ((((((((((((((((((isnotnull(PULocationID#31L) AND isnotnull(DOLocationID#32L)) AND isnotnull(passenger_count#33L)) AND isnotnull(tpep_pickup_datetime#29)) AND isnotnull(tpep_dropoff_datetime#30)) AND isnotnull(cast(PULocationID#31L as int))) AND isnotnull(cast(DOLocationID#32L as int))) AND isnotnull(cast(passenger_count#33L as int))) AND isnotnull(trip_distance#34)) AND isnotnull(fare_amount#37)) AND isnotnull(tip_amount#38)) AND isnotnull(total_amount#39)) AND NOT coalesce((fare_amount#37 <= 0.0), false)) AND NOT coalesce((trip_distance#34 <= 0.0), false)) AND NOT coalesce(((cast(passenger_count#33L as int) = 0) OR (cast(passenger_count#33L as int) > 6)), false)) AND NOT coalesce((tpep_dropoff_datetime#30 <= tpep_pickup_datetime#29), false)) AND NOT coalesce((((cast(PULocationID#31L as int) < 1) OR (cast(PULocationID#31L as int) > 263)) OR ((cast(DOLocationID#32L as int) < 1) OR (cast(DOLocationID#32L as int) > 263))), false)) AND (cast(PULocationID#31L as int) >= 1)) AND (cast(PULocationID#31L as int) <= 263))
+
+(14) Project
+Output [5]: [cast(PULocationID#31L as int) AS PULocationID#42, trip_distance#34, fare_amount#37, 2019 AS year#51, 2 AS month#52]
+Input [9]: [tpep_pickup_datetime#29, tpep_dropoff_datetime#30, PULocationID#31L, DOLocationID#32L, passenger_count#33L, trip_distance#34, fare_amount#37, tip_amount#38, total_amount#39]
+
+(15) Scan parquet 
+Output [9]: [tpep_pickup_datetime#54, tpep_dropoff_datetime#55, PULocationID#56L, DOLocationID#57L, passenger_count#58L, trip_distance#59, fare_amount#62, tip_amount#63, total_amount#64]
+Batched: true
+Location: InMemoryFileIndex [file:/project/data/sintetico/raw/yellow_tripdata_2019-03.parquet]
+PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(trip_distance), IsNotNull(fare_amount), IsNotNull(tip_amount), IsNotNull(total_amount)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:bigint,DOLocationID:bigint,passenger_count:bigint,trip_distance:double,fare_amount:double,tip_amount:double,total_amount:double>
+
+(16) Filter
+Input [9]: [tpep_pickup_datetime#54, tpep_dropoff_datetime#55, PULocationID#56L, DOLocationID#57L, passenger_count#58L, trip_distance#59, fare_amount#62, tip_amount#63, total_amount#64]
+Condition : ((((((((((((((((((isnotnull(PULocationID#56L) AND isnotnull(DOLocationID#57L)) AND isnotnull(passenger_count#58L)) AND isnotnull(tpep_pickup_datetime#54)) AND isnotnull(tpep_dropoff_datetime#55)) AND isnotnull(cast(PULocationID#56L as int))) AND isnotnull(cast(DOLocationID#57L as int))) AND isnotnull(cast(passenger_count#58L as int))) AND isnotnull(trip_distance#59)) AND isnotnull(fare_amount#62)) AND isnotnull(tip_amount#63)) AND isnotnull(total_amount#64)) AND NOT coalesce((fare_amount#62 <= 0.0), false)) AND NOT coalesce((trip_distance#59 <= 0.0), false)) AND NOT coalesce(((cast(passenger_count#58L as int) = 0) OR (cast(passenger_count#58L as int) > 6)), false)) AND NOT coalesce((tpep_dropoff_datetime#55 <= tpep_pickup_datetime#54), false)) AND NOT coalesce((((cast(PULocationID#56L as int) < 1) OR (cast(PULocationID#56L as int) > 263)) OR ((cast(DOLocationID#57L as int) < 1) OR (cast(DOLocationID#57L as int) > 263))), false)) AND (cast(PULocationID#56L as int) >= 1)) AND (cast(PULocationID#56L as int) <= 263))
+
+(17) Project
+Output [5]: [cast(PULocationID#56L as int) AS PULocationID#67, trip_distance#59, fare_amount#62, 2019 AS year#76, 3 AS month#77]
+Input [9]: [tpep_pickup_datetime#54, tpep_dropoff_datetime#55, PULocationID#56L, DOLocationID#57L, passenger_count#58L, trip_distance#59, fare_amount#62, tip_amount#63, total_amount#64]
+
+(18) Scan parquet 
+Output [9]: [tpep_pickup_datetime#79, tpep_dropoff_datetime#80, PULocationID#81L, DOLocationID#82L, passenger_count#83L, trip_distance#84, fare_amount#87, tip_amount#88, total_amount#89]
+Batched: true
+Location: InMemoryFileIndex [file:/project/data/sintetico/raw/yellow_tripdata_2019-04.parquet]
+PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(trip_distance), IsNotNull(fare_amount), IsNotNull(tip_amount), IsNotNull(total_amount)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:bigint,DOLocationID:bigint,passenger_count:bigint,trip_distance:double,fare_amount:double,tip_amount:double,total_amount:double>
+
+(19) Filter
+Input [9]: [tpep_pickup_datetime#79, tpep_dropoff_datetime#80, PULocationID#81L, DOLocationID#82L, passenger_count#83L, trip_distance#84, fare_amount#87, tip_amount#88, total_amount#89]
+Condition : ((((((((((((((((((isnotnull(PULocationID#81L) AND isnotnull(DOLocationID#82L)) AND isnotnull(passenger_count#83L)) AND isnotnull(tpep_pickup_datetime#79)) AND isnotnull(tpep_dropoff_datetime#80)) AND isnotnull(cast(PULocationID#81L as int))) AND isnotnull(cast(DOLocationID#82L as int))) AND isnotnull(cast(passenger_count#83L as int))) AND isnotnull(trip_distance#84)) AND isnotnull(fare_amount#87)) AND isnotnull(tip_amount#88)) AND isnotnull(total_amount#89)) AND NOT coalesce((fare_amount#87 <= 0.0), false)) AND NOT coalesce((trip_distance#84 <= 0.0), false)) AND NOT coalesce(((cast(passenger_count#83L as int) = 0) OR (cast(passenger_count#83L as int) > 6)), false)) AND NOT coalesce((tpep_dropoff_datetime#80 <= tpep_pickup_datetime#79), false)) AND NOT coalesce((((cast(PULocationID#81L as int) < 1) OR (cast(PULocationID#81L as int) > 263)) OR ((cast(DOLocationID#82L as int) < 1) OR (cast(DOLocationID#82L as int) > 263))), false)) AND (cast(PULocationID#81L as int) >= 1)) AND (cast(PULocationID#81L as int) <= 263))
+
+(20) Project
+Output [5]: [cast(PULocationID#81L as int) AS PULocationID#92, trip_distance#84, fare_amount#87, 2019 AS year#101, 4 AS month#102]
+Input [9]: [tpep_pickup_datetime#79, tpep_dropoff_datetime#80, PULocationID#81L, DOLocationID#82L, passenger_count#83L, trip_distance#84, fare_amount#87, tip_amount#88, total_amount#89]
+
+(21) Scan parquet 
+Output [9]: [tpep_pickup_datetime#104, tpep_dropoff_datetime#105, PULocationID#106L, DOLocationID#107L, passenger_count#108L, trip_distance#109, fare_amount#112, tip_amount#113, total_amount#114]
+Batched: true
+Location: InMemoryFileIndex [file:/project/data/sintetico/raw/yellow_tripdata_2019-05.parquet]
+PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(trip_distance), IsNotNull(fare_amount), IsNotNull(tip_amount), IsNotNull(total_amount)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:bigint,DOLocationID:bigint,passenger_count:bigint,trip_distance:double,fare_amount:double,tip_amount:double,total_amount:double>
+
+(22) Filter
+Input [9]: [tpep_pickup_datetime#104, tpep_dropoff_datetime#105, PULocationID#106L, DOLocationID#107L, passenger_count#108L, trip_distance#109, fare_amount#112, tip_amount#113, total_amount#114]
+Condition : ((((((((((((((((((isnotnull(PULocationID#106L) AND isnotnull(DOLocationID#107L)) AND isnotnull(passenger_count#108L)) AND isnotnull(tpep_pickup_datetime#104)) AND isnotnull(tpep_dropoff_datetime#105)) AND isnotnull(cast(PULocationID#106L as int))) AND isnotnull(cast(DOLocationID#107L as int))) AND isnotnull(cast(passenger_count#108L as int))) AND isnotnull(trip_distance#109)) AND isnotnull(fare_amount#112)) AND isnotnull(tip_amount#113)) AND isnotnull(total_amount#114)) AND NOT coalesce((fare_amount#112 <= 0.0), false)) AND NOT coalesce((trip_distance#109 <= 0.0), false)) AND NOT coalesce(((cast(passenger_count#108L as int) = 0) OR (cast(passenger_count#108L as int) > 6)), false)) AND NOT coalesce((tpep_dropoff_datetime#105 <= tpep_pickup_datetime#104), false)) AND NOT coalesce((((cast(PULocationID#106L as int) < 1) OR (cast(PULocationID#106L as int) > 263)) OR ((cast(DOLocationID#107L as int) < 1) OR (cast(DOLocationID#107L as int) > 263))), false)) AND (cast(PULocationID#106L as int) >= 1)) AND (cast(PULocationID#106L as int) <= 263))
+
+(23) Project
+Output [5]: [cast(PULocationID#106L as int) AS PULocationID#117, trip_distance#109, fare_amount#112, 2019 AS year#126, 5 AS month#127]
+Input [9]: [tpep_pickup_datetime#104, tpep_dropoff_datetime#105, PULocationID#106L, DOLocationID#107L, passenger_count#108L, trip_distance#109, fare_amount#112, tip_amount#113, total_amount#114]
+
+(24) Scan parquet 
+Output [9]: [tpep_pickup_datetime#129, tpep_dropoff_datetime#130, PULocationID#131L, DOLocationID#132L, passenger_count#133L, trip_distance#134, fare_amount#137, tip_amount#138, total_amount#139]
+Batched: true
+Location: InMemoryFileIndex [file:/project/data/sintetico/raw/yellow_tripdata_2019-06.parquet]
+PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(passenger_count), IsNotNull(tpep_pickup_datetime), IsNotNull(tpep_dropoff_datetime), IsNotNull(trip_distance), IsNotNull(fare_amount), IsNotNull(tip_amount), IsNotNull(total_amount)]
+ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:bigint,DOLocationID:bigint,passenger_count:bigint,trip_distance:double,fare_amount:double,tip_amount:double,total_amount:double>
+
+(25) Filter
+Input [9]: [tpep_pickup_datetime#129, tpep_dropoff_datetime#130, PULocationID#131L, DOLocationID#132L, passenger_count#133L, trip_distance#134, fare_amount#137, tip_amount#138, total_amount#139]
+Condition : ((((((((((((((((((isnotnull(PULocationID#131L) AND isnotnull(DOLocationID#132L)) AND isnotnull(passenger_count#133L)) AND isnotnull(tpep_pickup_datetime#129)) AND isnotnull(tpep_dropoff_datetime#130)) AND isnotnull(cast(PULocationID#131L as int))) AND isnotnull(cast(DOLocationID#132L as int))) AND isnotnull(cast(passenger_count#133L as int))) AND isnotnull(trip_distance#134)) AND isnotnull(fare_amount#137)) AND isnotnull(tip_amount#138)) AND isnotnull(total_amount#139)) AND NOT coalesce((fare_amount#137 <= 0.0), false)) AND NOT coalesce((trip_distance#134 <= 0.0), false)) AND NOT coalesce(((cast(passenger_count#133L as int) = 0) OR (cast(passenger_count#133L as int) > 6)), false)) AND NOT coalesce((tpep_dropoff_datetime#130 <= tpep_pickup_datetime#129), false)) AND NOT coalesce((((cast(PULocationID#131L as int) < 1) OR (cast(PULocationID#131L as int) > 263)) OR ((cast(DOLocationID#132L as int) < 1) OR (cast(DOLocationID#132L as int) > 263))), false)) AND (cast(PULocationID#131L as int) >= 1)) AND (cast(PULocationID#131L as int) <= 263))
+
+(26) Project
+Output [5]: [cast(PULocationID#131L as int) AS PULocationID#142, trip_distance#134, fare_amount#137, 2019 AS year#151, 6 AS month#152]
+Input [9]: [tpep_pickup_datetime#129, tpep_dropoff_datetime#130, PULocationID#131L, DOLocationID#132L, passenger_count#133L, trip_distance#134, fare_amount#137, tip_amount#138, total_amount#139]
+
+(27) Union
+
+(28) Scan csv 
+Output [3]: [LocationID#276, Borough#277, Zone#278]
+Batched: false
+Location: InMemoryFileIndex [file:/project/data/sintetico/taxi_zone_lookup.csv]
+PushedFilters: [IsNotNull(LocationID)]
+ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
+(29) Filter
+Input [3]: [LocationID#276, Borough#277, Zone#278]
+Condition : isnotnull(LocationID#276)
+
+(30) Project
+Output [3]: [LocationID#276 AS PULocationID#280, Zone#278 AS zone#281, Borough#277 AS borough#282]
+Input [3]: [LocationID#276, Borough#277, Zone#278]
+
+(31) BroadcastExchange
+Input [3]: [PULocationID#280, zone#281, borough#282]
+Arguments: HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=1933]
+
+(32) BroadcastHashJoin
+Left keys [1]: [PULocationID#17]
+Right keys [1]: [PULocationID#280]
+Join type: Inner
+Join condition: None
+
+(33) Project
+Output [7]: [PULocationID#17, trip_distance#20, fare_amount#23, year#26, month#27, zone#281, borough#282]
+Input [8]: [PULocationID#17, trip_distance#20, fare_amount#23, year#26, month#27, PULocationID#280, zone#281, borough#282]
+
+(34) HashAggregate
+Input [7]: [PULocationID#17, trip_distance#20, fare_amount#23, year#26, month#27, zone#281, borough#282]
+Keys [5]: [borough#282, PULocationID#17, zone#281, year#26, month#27]
+Functions [5]: [partial_count(1), partial_avg(fare_amount#23), partial_stddev(fare_amount#23), partial_avg(trip_distance#20), partial_stddev(trip_distance#20)]
+Aggregate Attributes [11]: [count#342L, sum#343, count#344L, n#239, avg#240, m2#241, sum#345, count#346L, n#249, avg#250, m2#251]
+Results [16]: [borough#282, PULocationID#17, zone#281, year#26, month#27, count#347L, sum#348, count#349L, n#244, avg#245, m2#246, sum#350, count#351L, n#254, avg#255, m2#256]
+
+(35) Exchange
+Input [16]: [borough#282, PULocationID#17, zone#281, year#26, month#27, count#347L, sum#348, count#349L, n#244, avg#245, m2#246, sum#350, count#351L, n#254, avg#255, m2#256]
+Arguments: hashpartitioning(borough#282, PULocationID#17, zone#281, year#26, month#27, 200), ENSURE_REQUIREMENTS, [plan_id=1938]
+
+(36) HashAggregate
+Input [16]: [borough#282, PULocationID#17, zone#281, year#26, month#27, count#347L, sum#348, count#349L, n#244, avg#245, m2#246, sum#350, count#351L, n#254, avg#255, m2#256]
+Keys [5]: [borough#282, PULocationID#17, zone#281, year#26, month#27]
+Functions [5]: [count(1), avg(fare_amount#23), stddev(fare_amount#23), avg(trip_distance#20), stddev(trip_distance#20)]
+Aggregate Attributes [5]: [count(1)#237L, avg(fare_amount#23)#238, stddev(fare_amount#23)#247, avg(trip_distance#20)#248, stddev(trip_distance#20)#257]
+Results [8]: [PULocationID#17, year#26, month#27, count(1)#237L AS trip_count#217L, avg(fare_amount#23)#238 AS mean_fare#218, stddev(fare_amount#23)#247 AS std_fare#219, avg(trip_distance#20)#248 AS mean_distance#220, stddev(trip_distance#20)#257 AS std_distance#221]
+
+(37) Exchange
+Input [8]: [PULocationID#17, year#26, month#27, trip_count#217L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221]
+Arguments: hashpartitioning(PULocationID#17, year#26, month#27, 200), ENSURE_REQUIREMENTS, [plan_id=1943]
+
+(38) Sort
+Input [8]: [PULocationID#17, year#26, month#27, trip_count#217L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221]
+Arguments: [PULocationID#17 ASC NULLS FIRST, year#26 ASC NULLS FIRST, month#27 ASC NULLS FIRST], false, 0
+
+(39) SortMergeJoin
+Left keys [3]: [PULocationID#213, year#274, month#275]
+Right keys [3]: [PULocationID#17, year#26, month#27]
+Join type: LeftOuter
+Join condition: None
+
+(40) Project
+Output [11]: [PULocationID#213, year#274, month#275, zone#214, borough#215, coalesce(trip_count#217L, 0) AS trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, ((year#274 * 12) + month#275) AS m_idx#285]
+Input [13]: [PULocationID#213, zone#214, borough#215, year#274, month#275, PULocationID#17, year#26, month#27, trip_count#217L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221]
+
+(41) Exchange
+Input [11]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285]
+Arguments: hashpartitioning(borough#215, year#274, month#275, 200), ENSURE_REQUIREMENTS, [plan_id=1949]
+
+(42) Sort
+Input [11]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285]
+Arguments: [borough#215 ASC NULLS FIRST, year#274 ASC NULLS FIRST, month#275 ASC NULLS FIRST, trip_count#284L DESC NULLS LAST], false, 0
+
+(43) Window
+Input [11]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285]
+Arguments: [rank(trip_count#284L) windowspecdefinition(borough#215, year#274, month#275, trip_count#284L DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS rank_in_borough#286], [borough#215, year#274, month#275], [trip_count#284L DESC NULLS LAST]
+
+(44) Exchange
+Input [12]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286]
+Arguments: hashpartitioning(PULocationID#213, 200), ENSURE_REQUIREMENTS, [plan_id=1953]
+
+(45) Sort
+Input [12]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286]
+Arguments: [PULocationID#213 ASC NULLS FIRST, m_idx#285 ASC NULLS FIRST], false, 0
+
+(46) Window
+Input [12]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286]
+Arguments: [sum(trip_count#284L) windowspecdefinition(PULocationID#213, m_idx#285 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -2, currentrow$())) AS _we0#298L], [PULocationID#213], [m_idx#285 ASC NULLS FIRST]
+
+(47) Exchange
+Input [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, _we0#298L]
+Arguments: hashpartitioning(borough#215, 200), ENSURE_REQUIREMENTS, [plan_id=1957]
+
+(48) Sort
+Input [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, _we0#298L]
+Arguments: [borough#215 ASC NULLS FIRST, m_idx#285 ASC NULLS FIRST], false, 0
+
+(49) Window
+Input [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, _we0#298L]
+Arguments: [sum(trip_count#284L) windowspecdefinition(borough#215, m_idx#285 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -2, currentrow$())) AS _we1#299L], [borough#215], [m_idx#285 ASC NULLS FIRST]
+
+(50) Project
+Output [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, (cast(_we0#298L as double) / cast(_we1#299L as double)) AS share_3m#295]
+Input [14]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, _we0#298L, _we1#299L]
+
+(51) Exchange
+Input [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295]
+Arguments: hashpartitioning(PULocationID#213, 200), ENSURE_REQUIREMENTS, [plan_id=1962]
+
+(52) Sort
+Input [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295]
+Arguments: [PULocationID#213 ASC NULLS FIRST, m_idx#285 ASC NULLS FIRST], false, 0
+
+(53) Window
+Input [13]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295]
+Arguments: [avg(trip_count#284L) windowspecdefinition(PULocationID#213, m_idx#285 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -3, -1)) AS rolling_mean#300], [PULocationID#213], [m_idx#285 ASC NULLS FIRST]
+
+(54) Project
+Output [15]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295, rolling_mean#300, cast(trip_count#284L as double) AS _w0#320]
+Input [14]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295, rolling_mean#300]
+
+(55) Window
+Input [15]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295, rolling_mean#300, _w0#320]
+Arguments: [stddev(_w0#320) windowspecdefinition(PULocationID#213, m_idx#285 ASC NULLS FIRST, specifiedwindowframe(RangeFrame, -3, -1)) AS rolling_std#302], [PULocationID#213], [m_idx#285 ASC NULLS FIRST]
+
+(56) Project
+Output [15]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, rank_in_borough#286, share_3m#295, rolling_mean#300, rolling_std#302, coalesce((abs((cast(trip_count#284L as double) - rolling_mean#300)) > (rolling_std#302 * 1.5)), false) AS volume_anomaly#329]
+Input [16]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, m_idx#285, rank_in_borough#286, share_3m#295, rolling_mean#300, _w0#320, rolling_std#302]
+
+(57) AdaptiveSparkPlan
+Output [15]: [PULocationID#213, year#274, month#275, zone#214, borough#215, trip_count#284L, mean_fare#218, std_fare#219, mean_distance#220, std_distance#221, rank_in_borough#286, share_3m#295, rolling_mean#300, rolling_std#302, volume_anomaly#329]
+Arguments: isFinalPlan=false
+
+
