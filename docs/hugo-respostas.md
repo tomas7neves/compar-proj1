@@ -1,7 +1,7 @@
 # Respostas do Hugo (M3, O2, O3)
 
 > **Estado:** as respostas conceptuais (secções 2–4 e 6) são um **rascunho para o Hugo rever** antes de irem para o relatório ou para o oral.
-> Os números das secções 1 e 5 **não foram corridos pelo Hugo**: vêm da auditoria do Tomás (`spark-master`, `local[3]`, 2019 jan–set, com `fraction < 1`). Alguns valores chegaram cortados na mensagem e ficam assinalados com "(cortado)".
+> Os números das secções 1 e 5 **não foram corridos pelo Hugo**: vêm da auditoria do Tomás (`spark-master`, `local[3]`, 2019 jan–set, com `fraction < 1`). Alguns valores chegaram cortados na mensagem e ficam assinalados com "(cortado)". Os números finais (cluster, 2019 completo) estão na Tabela 1 do relatório.
 
 ---
 
@@ -98,6 +98,8 @@ Na execução, o Spark move **todas as linhas para uma partição** (aviso "No P
 
 **Zonas sem viagens na grelha (103/104/105, ilhas).** Entram com `trip_count = 0` em todos os meses: ficam empatadas no fim do ranking, com quota 0, e nunca são anomalia. **Para o ranking não é o ideal**, porque enchem o fim da lista com empates. Proposta: tirar as zonas com total 0 no período com `F.sum("trip_count").over(Window.partitionBy("PULocationID")) > 0`. Não lê as viagens outra vez e usa a partição das windows de zona. Ainda não mudei: fica para decidirmos.
 
+**Recomendação (a confirmar pelo Hugo):** não excluir. As zonas vazias não mexem no topo do ranking, nas quotas (somam 0) nem nos alertas (o `MIN_MEAN` = 30 já as tira). Mudar o M3 agora invalidava as comparações `exceptAll` com a baseline já medida. Fica explicado no relatório.
+
 ---
 
 ## 3. O2 (rascunho)
@@ -113,7 +115,7 @@ Na execução, o Spark move **todas as linhas para uma partição** (aviso "No P
 É o princípio do `reduceByKey` (combinar antes do shuffle): reduzir cedo e enriquecer depois.
 
 **Q9.3 – Quantas leituras e onde se veem.** São 4 leituras na auditoria (ver 1c). Onde se veem:
-- **Profiler:** no `input_records` da operação O2 (`results/metrics/*.json`), que deve dar cerca de 4 × as viagens carregadas. O `input_bytes` não serve, como diz a nota no profiler.
+- **Profiler:** no `input_records` da operação O2 (`results/metrics/*.json`), que deve dar cerca de 4 × as viagens carregadas. **Correção:** os 4× (e os 3× no O3) contam o plano *antes* de executar. A medição da baseline (Tabela 1 do relatório) dá 197,6 M = 2,3× no O2 e 169,2 M = 2,0× no O3. A explicação provável é o AQE reutilizar em execução os stages com o mesmo Exchange. No O2 a conta bate: 84,6 (`flows`) + 84,6 (top-20, reutilizado nas duas utilizações) + 84,6 × 4/12 (pivot, só 4 meses) ≈ 197,4 M. O `input_bytes` não serve, como diz a nota no profiler.
 - **Spark UI:** no separador SQL, há 2 queries com vários `Scan parquet`.
 
 **Q9.4 – "Inverte entre Q1 e Q3".**
@@ -186,7 +188,7 @@ Pôr 0 nas primeiras 4 semanas inventava quedas de procura.
 | M1 | 73 s | |
 | M2 | 31 s | |
 | M3 | 86 s | 26 |
-| O2 | (cortado) | |
+| O2 | (cortado; ver Tabela 1 do relatório) | |
 | O3 | 52 s | 17 |
 | **Total** | **330 s** | |
 
@@ -200,7 +202,7 @@ O FileScan conta 9 ficheiros por cada leitura das viagens.
 
 ---
 
-## 6. Próximos passos (rascunho)
+## 6. Próximos passos (rascunho; já feitos pelo Tomás como OPT-1 a OPT-4, ver relatório)
 
 | Otimização | Onde | Hipótese (confirmar com antes/depois) |
 |---|---|---|
@@ -211,5 +213,9 @@ O FileScan conta 9 ficheiros por cada leitura das viagens.
 | reordenar windows | M3 | −1 Exchange. Ganho esperado quase nulo, porque `z` é pequeno: bom exemplo de "não vale a pena" |
 | skew / AQE | O3, M3 | max/mediana < 3 nos stages grandes; a window por `borough` concentra o Manhattan, mas sobre dados agregados |
 
-- **Q5.1–Q5.4 (`main.py` e profiler):** ainda não tenho as perguntas. Manda-mas.
+- **Q5.1–Q5.4 (`main.py` e profiler):**
+  - Q5.1: **not needed**. `main.py` é código do Tomás (commit `42e76a2`) e é ele que o explica no oral.
+  - Q5.2: **not needed**. Mesma razão: o profiler é o do Lab 3, adaptado pelo Tomás no mesmo commit.
+  - Q5.3: **not needed**. O Hugo não alterou nem o `main.py` nem o profiler (ver `docs/ai-usage.md`).
+  - Q5.4: **not needed**. As perguntas do guia nunca chegaram ao Hugo, e as respostas sobre o uso do profiler no O2 estão no Q9.3.
 - **Falta no repo:** nada meu além deste commit. Não tenho `scripts/run.sh` nem gráficos; os únicos scripts são os de `scripts/sintetico/`.

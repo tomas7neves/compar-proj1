@@ -48,9 +48,11 @@ input, so data layout and reuse dominate run time, not arithmetic.
 \texttt{RatecodeID} change type in mid-2018). It computes six removal rules in \emph{one} aggregation (one read,
 not six \texttt{filter().count()}). It removes 3.80\,M trips (4.5\,\%).
 \textbf{M3} builds a full zone$\times$month grid (\texttt{crossJoin} + left join) so empty months exist before
-the \texttt{rangeBetween} windows are applied. \textbf{O3} computes mean and variance from $\sum x$ and $\sum x^2$,
+the \texttt{rangeBetween} windows are applied. The anomaly flag compares each month with the three \emph{previous}
+months (with the current month inside, $|z|$ cannot exceed $2/\sqrt{3}\approx1.15$) and needs a rolling mean
+$\ge$30 trips. \textbf{O3} computes mean and variance from $\sum x$ and $\sum x^2$,
 dividing by the calendar count of each weekday, so hours without trips count as zero. The 4-week lag is a
-self-join on \texttt{date\_add(28)}.
+self-join on \texttt{date\_add(28)}; the demand flag needs a mean $\ge$1 trip per hour.
 \textbf{Decisions.} We used the DataFrame API throughout: it composes with Python helpers (the rule dictionary,
 the \texttt{--opt} switches) and produces the same Catalyst plans as SQL.
 \todo{Figure: simplified physical plan of O2 (Exchange / BroadcastHashJoin / Window).}
@@ -153,8 +155,8 @@ single machine), what we would do with more time (the full 2016--2020 range).}
 \todo{from docs/ai-usage.md}
 
 \section*{Individual contributions}
-\todo{Tomás: environment, data, M1, M2, O2 integration, optimisation and measurements. Hugo: profiler, M3, O3,
-O2 notebooks. Percentages.}
+\todo{Tomás: environment, data, M1, M2, profiler, O2/O3 integration, optimisation and measurements. Hugo: M3,
+O2/O3 notebooks, O2 fixes after the audit. Percentages.}
 
 \section*{Comments and suggestions}
 
