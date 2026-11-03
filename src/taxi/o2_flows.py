@@ -29,6 +29,10 @@ def run(trips, zones, a, opt):
     # quota da rota nas saídas da zona de origem (window sem orderBy: partição inteira)
     out = Window.partitionBy("PULocationID", "year", "month")
     flows = flows.withColumn("share", F.col("trip_count") / F.sum("trip_count").over(out))
+    if "cache_agg" in opt:
+        # otimização: flows é usado 4x (top-20 2x, quotas, escrita) e sem cache cada uso volta a ler as viagens.
+        # São só ~330 mil linhas: cabem em memória, ao contrário das viagens (ver OPT-3)
+        flows = flows.cache()
 
     # 3) top-20 rotas por borough de origem, no período todo carregado (decisão do grupo).
     #    row_number: exatamente 20. Desempate pelos IDs: top é calculado 2x e tem de dar as mesmas rotas

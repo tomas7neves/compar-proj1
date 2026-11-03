@@ -2,6 +2,7 @@
 # M1 - ingestão e limpeza: lê os ficheiros com tipos fixos, conta por ano quantas
 # viagens cada critério remove (m1_stats) e devolve as viagens limpas.
 from functools import reduce
+from pyspark import StorageLevel
 from pyspark.sql import DataFrame, functions as F
 
 # Tipo final de cada coluna usada. passenger_count e RatecodeID são int64 até 2018-06
@@ -70,4 +71,14 @@ def run(spark, a, opt, prof):
         # 1 ficheiro: aceitável porque stats tem 1 linha por ano.
         stats.coalesce(1).write.mode("overwrite").json(f"{a.output}/m1_stats")
         trips = raw.filter(~any_bad)
+        if "materialize" in opt:
+            # otimização: limpar uma vez e gravar; as operações seguintes leem daqui em vez de
+            # reler e relimpar os ficheiros originais. Row groups de 32 MB: os originais têm 1 só
+            # row group por ficheiro, e por isso só 1 task por ficheiro lia dados.
+            trips.write.mode("overwrite").option("parquet.block.size", 32 * 1024 * 1024) \
+                 .parquet(f"{a.output}/m1_trips")
+            trips = spark.read.parquet(f"{a.output}/m1_trips")
+        elif "cache" in opt:
+            # otimização: guardar as viagens limpas em memória (o que não cabe vai para disco)
+            trips = trips.persist(StorageLevel.MEMORY_AND_DISK)
     return trips, zones

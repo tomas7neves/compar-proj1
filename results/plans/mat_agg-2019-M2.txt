@@ -1,0 +1,48 @@
+== Parsed Logical Plan ==
+'Aggregate ['borough, 'day_of_week, 'hour_of_day], ['borough, 'day_of_week, 'hour_of_day, 'count(*) AS trip_count#479, 'avg('fare_amount) AS mean_fare#480, 'avg('duration_min) AS mean_duration_min#481, 'avg('trip_distance) AS mean_distance#482]
++- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473, day_of_week#476, hour_of_day#477, (cast((unix_timestamp(tpep_dropoff_datetime#460, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true) - unix_timestamp(tpep_pickup_datetime#459, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true)) as double) / cast(60 as double)) AS duration_min#478]
+   +- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473, day_of_week#476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS hour_of_day#477]
+      +- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473, dayofweek(cast(tpep_pickup_datetime#459 as date)) AS day_of_week#476]
+         +- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473]
+            +- Join Inner, (PULocationID#461 = PULocationID#472)
+               :- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+               +- Project [LocationID#0 AS PULocationID#472, Borough#1 AS borough#473]
+                  +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+
+== Analyzed Logical Plan ==
+borough: string, day_of_week: int, hour_of_day: int, trip_count: bigint, mean_fare: double, mean_duration_min: double, mean_distance: double
+Aggregate [borough#473, day_of_week#476, hour_of_day#477], [borough#473, day_of_week#476, hour_of_day#477, count(1) AS trip_count#479L, avg(fare_amount#467) AS mean_fare#480, avg(duration_min#478) AS mean_duration_min#481, avg(trip_distance#464) AS mean_distance#482]
++- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473, day_of_week#476, hour_of_day#477, (cast((unix_timestamp(tpep_dropoff_datetime#460, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true) - unix_timestamp(tpep_pickup_datetime#459, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true)) as double) / cast(60 as double)) AS duration_min#478]
+   +- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473, day_of_week#476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS hour_of_day#477]
+      +- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473, dayofweek(cast(tpep_pickup_datetime#459 as date)) AS day_of_week#476]
+         +- Project [PULocationID#461, tpep_pickup_datetime#459, tpep_dropoff_datetime#460, DOLocationID#462, passenger_count#463, trip_distance#464, RatecodeID#465, payment_type#466, fare_amount#467, tip_amount#468, total_amount#469, year#470, month#471, borough#473]
+            +- Join Inner, (PULocationID#461 = PULocationID#472)
+               :- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+               +- Project [LocationID#0 AS PULocationID#472, Borough#1 AS borough#473]
+                  +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+
+== Optimized Logical Plan ==
+Aggregate [borough#473, day_of_week#476, hour_of_day#477], [borough#473, day_of_week#476, hour_of_day#477, count(1) AS trip_count#479L, avg(fare_amount#467) AS mean_fare#480, avg(duration_min#478) AS mean_duration_min#481, avg(trip_distance#464) AS mean_distance#482]
++- Project [trip_distance#464, fare_amount#467, borough#473, dayofweek(cast(tpep_pickup_datetime#459 as date)) AS day_of_week#476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS hour_of_day#477, (cast((unix_timestamp(tpep_dropoff_datetime#460, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true) - unix_timestamp(tpep_pickup_datetime#459, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true)) as double) / 60.0) AS duration_min#478]
+   +- Join Inner, (PULocationID#461 = PULocationID#472)
+      :- Project [tpep_pickup_datetime#459, tpep_dropoff_datetime#460, PULocationID#461, trip_distance#464, fare_amount#467]
+      :  +- Filter isnotnull(PULocationID#461)
+      :     +- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+      +- Project [LocationID#0 AS PULocationID#472, Borough#1 AS borough#473]
+         +- Filter isnotnull(LocationID#0)
+            +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- HashAggregate(keys=[borough#473, day_of_week#476, hour_of_day#477], functions=[count(1), avg(fare_amount#467), avg(duration_min#478), avg(trip_distance#464)], output=[borough#473, day_of_week#476, hour_of_day#477, trip_count#479L, mean_fare#480, mean_duration_min#481, mean_distance#482])
+   +- Exchange hashpartitioning(borough#473, day_of_week#476, hour_of_day#477, 200), ENSURE_REQUIREMENTS, [plan_id=770]
+      +- HashAggregate(keys=[borough#473, day_of_week#476, hour_of_day#477], functions=[partial_count(1), partial_avg(fare_amount#467), partial_avg(duration_min#478), partial_avg(trip_distance#464)], output=[borough#473, day_of_week#476, hour_of_day#477, count#512L, sum#513, count#514L, sum#515, count#516L, sum#517, count#518L])
+         +- Project [trip_distance#464, fare_amount#467, borough#473, dayofweek(cast(tpep_pickup_datetime#459 as date)) AS day_of_week#476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS hour_of_day#477, (cast((unix_timestamp(tpep_dropoff_datetime#460, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true) - unix_timestamp(tpep_pickup_datetime#459, yyyy-MM-dd HH:mm:ss, Some(Etc/UTC), true)) as double) / 60.0) AS duration_min#478]
+            +- BroadcastHashJoin [PULocationID#461], [PULocationID#472], Inner, BuildRight, false, false
+               :- Filter isnotnull(PULocationID#461)
+               :  +- FileScan parquet [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,trip_distance#464,fare_amount#467] Batched: true, DataFilters: [isnotnull(PULocationID#461)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/mat_agg/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID)], ReadSchema: struct<tpep_pickup_datetime:timestamp,tpep_dropoff_datetime:timestamp,PULocationID:int,trip_dista...
+               +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=765]
+                  +- Project [LocationID#0 AS PULocationID#472, Borough#1 AS borough#473]
+                     +- Filter isnotnull(LocationID#0)
+                        +- FileScan csv [LocationID#0,Borough#1] Batched: false, DataFilters: [isnotnull(LocationID#0)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string>
+

@@ -18,6 +18,9 @@ def run(trips, zones, a, opt):
               .groupBy("PULocationID", F.to_date(pickup).alias("pickup_date"), F.hour(pickup).alias("hour_of_day"))
               .agg(F.count("*").alias("trip_count"))
               .withColumn("day_of_week", F.dayofweek("pickup_date")))          # 1 = domingo
+    if "cache_agg" in opt:
+        # otimização: c é usado 3x (hist, lag e o join do lag); ~1 M linhas, cabe em memória (ver OPT-3)
+        c = c.cache()
 
     # 2) média e variância por balde, contando as horas sem viagens (x = 0):
     #    média = Σx/N, var = (Σx² − N·média²)/(N−1), N = nº de dias desse dia da semana no período
