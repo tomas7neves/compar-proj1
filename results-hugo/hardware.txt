@@ -1,0 +1,8 @@
+Thu Nov  5 14:45:31 WET 2026
+Darwin Mac.lan 25.6.0 Darwin Kernel Version 25.6.0: Tue Aug 18 17:51:33 PDT 2026; root:xnu-12377.161.15.700.19~2/RELEASE_ARM64_T8132 arm64
+Apple M4
+10
+10
+17179869184
+Docker VM: 10 CPUs, 8217059328 bytes
+workers 3 [(2, 1500), (2, 1500), (2, 1500)]

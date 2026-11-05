@@ -1,0 +1,243 @@
+== Parsed Logical Plan ==
+'Join UsingJoin(Inner, [PULocationID])
+:- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, coalesce(((demand_index#3560 > 2.0) AND (hist_mean#3516 >= 1.0)), false) AS high_demand#3561]
+:  +- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, try_divide(trip_count#3460L, hist_mean#3516) AS demand_index#3560]
+:     +- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517]
+:        +- Join Inner, (((PULocationID#461 = PULocationID#3544) AND (day_of_week#3475 = day_of_week#3558)) AND (hour_of_day#3459 = hour_of_day#3556))
+:           :- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475, CASE WHEN ((year(date_sub(pickup_date#3458, 28)) * 12) + month(date_sub(pickup_date#3458, 28))) IN (24229,24230,24231,24232,24233,24234,24235,24236,24237,24238,24239,24240) THEN coalesce(lag_4w#3519L, cast(0 as bigint)) END AS lag_4w#3538L]
+:           :  +- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475, lag_4w#3519L]
+:           :     +- Join LeftOuter, (((PULocationID#461 = PULocationID#3522) AND (pickup_date#3458 = pickup_date#3518)) AND (hour_of_day#3459 = hour_of_day#3534))
+:           :        :- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, dayofweek(pickup_date#3458) AS day_of_week#3475]
+:           :        :  +- Aggregate [PULocationID#461, to_date(tpep_pickup_datetime#459, None, Some(Etc/UTC), true), hour(tpep_pickup_datetime#459, Some(Etc/UTC))], [PULocationID#461, to_date(tpep_pickup_datetime#459, None, Some(Etc/UTC), true) AS pickup_date#3458, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS hour_of_day#3459, count(1) AS trip_count#3460L]
+:           :        :     +- Filter ((year(cast(tpep_pickup_datetime#459 as date)) = year#470) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+:           :        :        +- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+:           :        +- Project [PULocationID#3522, hour_of_day#3534, date_add(pickup_date#3533, 28) AS pickup_date#3518, trip_count#3535L AS lag_4w#3519L]
+:           :           +- Project [PULocationID#3522, pickup_date#3533, hour_of_day#3534, trip_count#3535L, dayofweek(pickup_date#3533) AS day_of_week#3536]
+:           :              +- Aggregate [PULocationID#3522, to_date(tpep_pickup_datetime#3520, None, Some(Etc/UTC), true), hour(tpep_pickup_datetime#3520, Some(Etc/UTC))], [PULocationID#3522, to_date(tpep_pickup_datetime#3520, None, Some(Etc/UTC), true) AS pickup_date#3533, hour(tpep_pickup_datetime#3520, Some(Etc/UTC)) AS hour_of_day#3534, count(1) AS trip_count#3535L]
+:           :                 +- Filter ((year(cast(tpep_pickup_datetime#3520 as date)) = year#3531) AND (month(cast(tpep_pickup_datetime#3520 as date)) = month#3532))
+:           :                    +- Relation [tpep_pickup_datetime#3520,tpep_dropoff_datetime#3521,PULocationID#3522,DOLocationID#3523,passenger_count#3524,trip_distance#3525,RatecodeID#3526,payment_type#3527,fare_amount#3528,tip_amount#3529,total_amount#3530,year#3531,month#3532] parquet
+:           +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, hist_mean#3516, hist_var#3517]
+:              +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x#3507L, sum_x2#3508, n_days#3506, hist_mean#3516, try_divide((sum_x2#3508 - (cast(n_days#3506 as double) * POWER(hist_mean#3516, cast(2 as double)))), (n_days#3506 - 1)) AS hist_var#3517]
+:                 +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x#3507L, sum_x2#3508, n_days#3506, (cast(sum_x#3507L as double) / cast(n_days#3506 as double)) AS hist_mean#3516]
+:                    +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x#3507L, sum_x2#3508, n_days#3506]
+:                       +- Join Inner, (day_of_week#3558 = day_of_week#3505)
+:                          :- Aggregate [PULocationID#3544, day_of_week#3558, hour_of_day#3556], [PULocationID#3544, day_of_week#3558, hour_of_day#3556, sum(trip_count#3557L) AS sum_x#3507L, sum(POWER(cast(trip_count#3557L as double), cast(2 as double))) AS sum_x2#3508]
+:                          :  +- Project [PULocationID#3544, pickup_date#3555, hour_of_day#3556, trip_count#3557L, dayofweek(pickup_date#3555) AS day_of_week#3558]
+:                          :     +- Aggregate [PULocationID#3544, to_date(tpep_pickup_datetime#3542, None, Some(Etc/UTC), true), hour(tpep_pickup_datetime#3542, Some(Etc/UTC))], [PULocationID#3544, to_date(tpep_pickup_datetime#3542, None, Some(Etc/UTC), true) AS pickup_date#3555, hour(tpep_pickup_datetime#3542, Some(Etc/UTC)) AS hour_of_day#3556, count(1) AS trip_count#3557L]
+:                          :        +- Filter ((year(cast(tpep_pickup_datetime#3542 as date)) = year#3553) AND (month(cast(tpep_pickup_datetime#3542 as date)) = month#3554))
+:                          :           +- Relation [tpep_pickup_datetime#3542,tpep_dropoff_datetime#3543,PULocationID#3544,DOLocationID#3545,passenger_count#3546,trip_distance#3547,RatecodeID#3548,payment_type#3549,fare_amount#3550,tip_amount#3551,total_amount#3552,year#3553,month#3554] parquet
+:                          +- LogicalRDD [day_of_week#3505, n_days#3506], false
++- Project [LocationID#0 AS PULocationID#3539, Zone#2 AS zone#3540, Borough#1 AS borough#3541, service_zone#3]
+   +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, day_of_week: int, hour_of_day: int, pickup_date: date, trip_count: bigint, lag_4w: bigint, hist_mean: double, hist_var: double, demand_index: double, high_demand: boolean, zone: string, borough: string, service_zone: string
+Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, high_demand#3561, zone#3540, borough#3541, service_zone#3]
++- Join Inner, (PULocationID#461 = PULocationID#3539)
+   :- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, coalesce(((demand_index#3560 > 2.0) AND (hist_mean#3516 >= 1.0)), false) AS high_demand#3561]
+   :  +- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, try_divide(trip_count#3460L, hist_mean#3516) AS demand_index#3560]
+   :     +- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517]
+   :        +- Join Inner, (((PULocationID#461 = PULocationID#3544) AND (day_of_week#3475 = day_of_week#3558)) AND (hour_of_day#3459 = hour_of_day#3556))
+   :           :- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475, CASE WHEN ((year(date_sub(pickup_date#3458, 28)) * 12) + month(date_sub(pickup_date#3458, 28))) IN (24229,24230,24231,24232,24233,24234,24235,24236,24237,24238,24239,24240) THEN coalesce(lag_4w#3519L, cast(0 as bigint)) END AS lag_4w#3538L]
+   :           :  +- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475, lag_4w#3519L]
+   :           :     +- Join LeftOuter, (((PULocationID#461 = PULocationID#3522) AND (pickup_date#3458 = pickup_date#3518)) AND (hour_of_day#3459 = hour_of_day#3534))
+   :           :        :- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, dayofweek(pickup_date#3458) AS day_of_week#3475]
+   :           :        :  +- Aggregate [PULocationID#461, to_date(tpep_pickup_datetime#459, None, Some(Etc/UTC), true), hour(tpep_pickup_datetime#459, Some(Etc/UTC))], [PULocationID#461, to_date(tpep_pickup_datetime#459, None, Some(Etc/UTC), true) AS pickup_date#3458, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS hour_of_day#3459, count(1) AS trip_count#3460L]
+   :           :        :     +- Filter ((year(cast(tpep_pickup_datetime#459 as date)) = year#470) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+   :           :        :        +- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+   :           :        +- Project [PULocationID#3522, hour_of_day#3534, date_add(pickup_date#3533, 28) AS pickup_date#3518, trip_count#3535L AS lag_4w#3519L]
+   :           :           +- Project [PULocationID#3522, pickup_date#3533, hour_of_day#3534, trip_count#3535L, dayofweek(pickup_date#3533) AS day_of_week#3536]
+   :           :              +- Aggregate [PULocationID#3522, to_date(tpep_pickup_datetime#3520, None, Some(Etc/UTC), true), hour(tpep_pickup_datetime#3520, Some(Etc/UTC))], [PULocationID#3522, to_date(tpep_pickup_datetime#3520, None, Some(Etc/UTC), true) AS pickup_date#3533, hour(tpep_pickup_datetime#3520, Some(Etc/UTC)) AS hour_of_day#3534, count(1) AS trip_count#3535L]
+   :           :                 +- Filter ((year(cast(tpep_pickup_datetime#3520 as date)) = year#3531) AND (month(cast(tpep_pickup_datetime#3520 as date)) = month#3532))
+   :           :                    +- Relation [tpep_pickup_datetime#3520,tpep_dropoff_datetime#3521,PULocationID#3522,DOLocationID#3523,passenger_count#3524,trip_distance#3525,RatecodeID#3526,payment_type#3527,fare_amount#3528,tip_amount#3529,total_amount#3530,year#3531,month#3532] parquet
+   :           +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, hist_mean#3516, hist_var#3517]
+   :              +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x#3507L, sum_x2#3508, n_days#3506, hist_mean#3516, try_divide((sum_x2#3508 - (cast(n_days#3506 as double) * POWER(hist_mean#3516, cast(2 as double)))), (n_days#3506 - 1)) AS hist_var#3517]
+   :                 +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x#3507L, sum_x2#3508, n_days#3506, (cast(sum_x#3507L as double) / cast(n_days#3506 as double)) AS hist_mean#3516]
+   :                    +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x#3507L, sum_x2#3508, n_days#3506]
+   :                       +- Join Inner, (day_of_week#3558 = day_of_week#3505)
+   :                          :- Aggregate [PULocationID#3544, day_of_week#3558, hour_of_day#3556], [PULocationID#3544, day_of_week#3558, hour_of_day#3556, sum(trip_count#3557L) AS sum_x#3507L, sum(POWER(cast(trip_count#3557L as double), cast(2 as double))) AS sum_x2#3508]
+   :                          :  +- Project [PULocationID#3544, pickup_date#3555, hour_of_day#3556, trip_count#3557L, dayofweek(pickup_date#3555) AS day_of_week#3558]
+   :                          :     +- Aggregate [PULocationID#3544, to_date(tpep_pickup_datetime#3542, None, Some(Etc/UTC), true), hour(tpep_pickup_datetime#3542, Some(Etc/UTC))], [PULocationID#3544, to_date(tpep_pickup_datetime#3542, None, Some(Etc/UTC), true) AS pickup_date#3555, hour(tpep_pickup_datetime#3542, Some(Etc/UTC)) AS hour_of_day#3556, count(1) AS trip_count#3557L]
+   :                          :        +- Filter ((year(cast(tpep_pickup_datetime#3542 as date)) = year#3553) AND (month(cast(tpep_pickup_datetime#3542 as date)) = month#3554))
+   :                          :           +- Relation [tpep_pickup_datetime#3542,tpep_dropoff_datetime#3543,PULocationID#3544,DOLocationID#3545,passenger_count#3546,trip_distance#3547,RatecodeID#3548,payment_type#3549,fare_amount#3550,tip_amount#3551,total_amount#3552,year#3553,month#3554] parquet
+   :                          +- LogicalRDD [day_of_week#3505, n_days#3506], false
+   +- Project [LocationID#0 AS PULocationID#3539, Zone#2 AS zone#3540, Borough#1 AS borough#3541, service_zone#3]
+      +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+
+== Optimized Logical Plan ==
+Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, high_demand#3561, zone#3540, borough#3541, service_zone#3]
++- Join Inner, (PULocationID#461 = PULocationID#3539)
+   :- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, coalesce(((demand_index#3560 > 2.0) AND (hist_mean#3516 >= 1.0)), false) AS high_demand#3561]
+   :  +- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, (cast(trip_count#3460L as double) / hist_mean#3516) AS demand_index#3560]
+   :     +- Join Inner, (((PULocationID#461 = PULocationID#3544) AND (day_of_week#3475 = day_of_week#3558)) AND (hour_of_day#3459 = hour_of_day#3556))
+   :        :- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475, CASE WHEN ((year(date_sub(pickup_date#3458, 28)) * 12) + month(date_sub(pickup_date#3458, 28))) INSET 24229, 24230, 24231, 24232, 24233, 24234, 24235, 24236, 24237, 24238, 24239, 24240 THEN coalesce(lag_4w#3519L, 0) END AS lag_4w#3538L]
+   :        :  +- Join LeftOuter, (((PULocationID#461 = PULocationID#3522) AND (pickup_date#3458 = pickup_date#3518)) AND (hour_of_day#3459 = hour_of_day#3534))
+   :        :     :- Filter ((isnotnull(PULocationID#461) AND isnotnull(day_of_week#3475)) AND isnotnull(hour_of_day#3459))
+   :        :     :  +- InMemoryRelation [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475], StorageLevel(disk, memory, deserialized, 1 replicas)
+   :        :     :        +- AdaptiveSparkPlan isFinalPlan=true
+                              +- == Final Plan ==
+                                 ResultQueryStage 1
+                                 +- *(2) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                    +- ShuffleQueryStage 0
+                                       +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5969]
+                                          +- *(1) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                             +- *(1) Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                +- *(1) Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                   +- *(1) ColumnarToRow
+                                                      +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+                              +- == Initial Plan ==
+                                 HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                 +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5708]
+                                    +- HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                       +- Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                          +- Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                             +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+   :        :     +- Project [PULocationID#3522, hour_of_day#3534, date_add(pickup_date#3533, 28) AS pickup_date#3518, trip_count#3535L AS lag_4w#3519L]
+   :        :        +- Filter ((isnotnull(PULocationID#3522) AND isnotnull(date_add(pickup_date#3533, 28))) AND isnotnull(hour_of_day#3534))
+   :        :           +- InMemoryRelation [PULocationID#3522, pickup_date#3533, hour_of_day#3534, trip_count#3535L, day_of_week#3536], StorageLevel(disk, memory, deserialized, 1 replicas)
+   :        :                 +- AdaptiveSparkPlan isFinalPlan=true
+                                 +- == Final Plan ==
+                                    ResultQueryStage 1
+                                    +- *(2) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                       +- ShuffleQueryStage 0
+                                          +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5969]
+                                             +- *(1) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                +- *(1) Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                   +- *(1) Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                      +- *(1) ColumnarToRow
+                                                         +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+                                 +- == Initial Plan ==
+                                    HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                    +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5708]
+                                       +- HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                          +- Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                             +- Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+   :        +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, hist_mean#3516, ((sum_x2#3508 - (cast(n_days#3506 as double) * POWER(hist_mean#3516, 2.0))) / cast((n_days#3506 - 1) as double)) AS hist_var#3517]
+   :           +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x2#3508, n_days#3506, (cast(sum_x#3507L as double) / cast(n_days#3506 as double)) AS hist_mean#3516]
+   :              +- Join Inner, (day_of_week#3558 = day_of_week#3505)
+   :                 :- Aggregate [PULocationID#3544, day_of_week#3558, hour_of_day#3556], [PULocationID#3544, day_of_week#3558, hour_of_day#3556, sum(trip_count#3557L) AS sum_x#3507L, sum(POWER(cast(trip_count#3557L as double), 2.0)) AS sum_x2#3508]
+   :                 :  +- Project [PULocationID#3544, hour_of_day#3556, trip_count#3557L, day_of_week#3558]
+   :                 :     +- Filter ((isnotnull(day_of_week#3558) AND isnotnull(PULocationID#3544)) AND isnotnull(hour_of_day#3556))
+   :                 :        +- InMemoryRelation [PULocationID#3544, pickup_date#3555, hour_of_day#3556, trip_count#3557L, day_of_week#3558], StorageLevel(disk, memory, deserialized, 1 replicas)
+   :                 :              +- AdaptiveSparkPlan isFinalPlan=true
+                                       +- == Final Plan ==
+                                          ResultQueryStage 1
+                                          +- *(2) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                             +- ShuffleQueryStage 0
+                                                +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5969]
+                                                   +- *(1) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                      +- *(1) Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                         +- *(1) Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                            +- *(1) ColumnarToRow
+                                                               +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+                                       +- == Initial Plan ==
+                                          HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                          +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5708]
+                                             +- HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                +- Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                   +- Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                      +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+   :                 +- Filter isnotnull(day_of_week#3505)
+   :                    +- LogicalRDD [day_of_week#3505, n_days#3506], false
+   +- Project [LocationID#0 AS PULocationID#3539, Zone#2 AS zone#3540, Borough#1 AS borough#3541, service_zone#3]
+      +- Filter isnotnull(LocationID#0)
+         +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, high_demand#3561, zone#3540, borough#3541, service_zone#3]
+   +- BroadcastHashJoin [PULocationID#461], [PULocationID#3539], Inner, BuildRight, false, false
+      :- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, demand_index#3560, coalesce(((demand_index#3560 > 2.0) AND (hist_mean#3516 >= 1.0)), false) AS high_demand#3561]
+      :  +- Project [PULocationID#461, day_of_week#3475, hour_of_day#3459, pickup_date#3458, trip_count#3460L, lag_4w#3538L, hist_mean#3516, hist_var#3517, (cast(trip_count#3460L as double) / hist_mean#3516) AS demand_index#3560]
+      :     +- SortMergeJoin [PULocationID#461, day_of_week#3475, hour_of_day#3459], [PULocationID#3544, day_of_week#3558, hour_of_day#3556], Inner
+      :        :- Sort [PULocationID#461 ASC NULLS FIRST, day_of_week#3475 ASC NULLS FIRST, hour_of_day#3459 ASC NULLS FIRST], false, 0
+      :        :  +- Exchange hashpartitioning(PULocationID#461, day_of_week#3475, hour_of_day#3459, 24), ENSURE_REQUIREMENTS, [plan_id=6956]
+      :        :     +- Project [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475, CASE WHEN ((year(date_sub(pickup_date#3458, 28)) * 12) + month(date_sub(pickup_date#3458, 28))) INSET 24229, 24230, 24231, 24232, 24233, 24234, 24235, 24236, 24237, 24238, 24239, 24240 THEN coalesce(lag_4w#3519L, 0) END AS lag_4w#3538L]
+      :        :        +- SortMergeJoin [PULocationID#461, pickup_date#3458, hour_of_day#3459], [PULocationID#3522, pickup_date#3518, hour_of_day#3534], LeftOuter
+      :        :           :- Sort [PULocationID#461 ASC NULLS FIRST, pickup_date#3458 ASC NULLS FIRST, hour_of_day#3459 ASC NULLS FIRST], false, 0
+      :        :           :  +- Filter ((isnotnull(PULocationID#461) AND isnotnull(day_of_week#3475)) AND isnotnull(hour_of_day#3459))
+      :        :           :     +- InMemoryTableScan [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475], [isnotnull(PULocationID#461), isnotnull(day_of_week#3475), isnotnull(hour_of_day#3459)]
+      :        :           :           +- InMemoryRelation [PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475], StorageLevel(disk, memory, deserialized, 1 replicas)
+      :        :           :                 +- AdaptiveSparkPlan isFinalPlan=true
+                                                +- == Final Plan ==
+                                                   ResultQueryStage 1
+                                                   +- *(2) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                                      +- ShuffleQueryStage 0
+                                                         +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5969]
+                                                            +- *(1) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                               +- *(1) Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                                  +- *(1) Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                                     +- *(1) ColumnarToRow
+                                                                        +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+                                                +- == Initial Plan ==
+                                                   HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                                   +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5708]
+                                                      +- HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                         +- Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                            +- Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                               +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+      :        :           +- Sort [PULocationID#3522 ASC NULLS FIRST, pickup_date#3518 ASC NULLS FIRST, hour_of_day#3534 ASC NULLS FIRST], false, 0
+      :        :              +- Exchange hashpartitioning(PULocationID#3522, pickup_date#3518, hour_of_day#3534, 24), ENSURE_REQUIREMENTS, [plan_id=6938]
+      :        :                 +- Project [PULocationID#3522, hour_of_day#3534, date_add(pickup_date#3533, 28) AS pickup_date#3518, trip_count#3535L AS lag_4w#3519L]
+      :        :                    +- Filter ((isnotnull(PULocationID#3522) AND isnotnull(date_add(pickup_date#3533, 28))) AND isnotnull(hour_of_day#3534))
+      :        :                       +- InMemoryTableScan [PULocationID#3522, hour_of_day#3534, pickup_date#3533, trip_count#3535L], [isnotnull(PULocationID#3522), isnotnull(date_add(pickup_date#3533, 28)), isnotnull(hour_of_day#3534)]
+      :        :                             +- InMemoryRelation [PULocationID#3522, pickup_date#3533, hour_of_day#3534, trip_count#3535L, day_of_week#3536], StorageLevel(disk, memory, deserialized, 1 replicas)
+      :        :                                   +- AdaptiveSparkPlan isFinalPlan=true
+                                                      +- == Final Plan ==
+                                                         ResultQueryStage 1
+                                                         +- *(2) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                                            +- ShuffleQueryStage 0
+                                                               +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5969]
+                                                                  +- *(1) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                                     +- *(1) Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                                        +- *(1) Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                                           +- *(1) ColumnarToRow
+                                                                              +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+                                                      +- == Initial Plan ==
+                                                         HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                                         +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5708]
+                                                            +- HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                               +- Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                                  +- Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                                     +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+      :        +- Sort [PULocationID#3544 ASC NULLS FIRST, day_of_week#3558 ASC NULLS FIRST, hour_of_day#3556 ASC NULLS FIRST], false, 0
+      :           +- Exchange hashpartitioning(PULocationID#3544, day_of_week#3558, hour_of_day#3556, 24), ENSURE_REQUIREMENTS, [plan_id=6957]
+      :              +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, hist_mean#3516, ((sum_x2#3508 - (cast(n_days#3506 as double) * POWER(hist_mean#3516, 2.0))) / cast((n_days#3506 - 1) as double)) AS hist_var#3517]
+      :                 +- Project [day_of_week#3558, PULocationID#3544, hour_of_day#3556, sum_x2#3508, n_days#3506, (cast(sum_x#3507L as double) / cast(n_days#3506 as double)) AS hist_mean#3516]
+      :                    +- SortMergeJoin [day_of_week#3558], [day_of_week#3505], Inner
+      :                       :- Sort [day_of_week#3558 ASC NULLS FIRST], false, 0
+      :                       :  +- Exchange hashpartitioning(day_of_week#3558, 24), ENSURE_REQUIREMENTS, [plan_id=6947]
+      :                       :     +- HashAggregate(keys=[PULocationID#3544, day_of_week#3558, hour_of_day#3556], functions=[sum(trip_count#3557L), sum(POWER(cast(trip_count#3557L as double), 2.0))], output=[PULocationID#3544, day_of_week#3558, hour_of_day#3556, sum_x#3507L, sum_x2#3508])
+      :                       :        +- Exchange hashpartitioning(PULocationID#3544, day_of_week#3558, hour_of_day#3556, 24), ENSURE_REQUIREMENTS, [plan_id=6943]
+      :                       :           +- HashAggregate(keys=[PULocationID#3544, day_of_week#3558, hour_of_day#3556], functions=[partial_sum(trip_count#3557L), partial_sum(POWER(cast(trip_count#3557L as double), 2.0))], output=[PULocationID#3544, day_of_week#3558, hour_of_day#3556, sum#3790L, sum#4192])
+      :                       :              +- Filter ((isnotnull(day_of_week#3558) AND isnotnull(PULocationID#3544)) AND isnotnull(hour_of_day#3556))
+      :                       :                 +- InMemoryTableScan [PULocationID#3544, hour_of_day#3556, trip_count#3557L, day_of_week#3558], [isnotnull(day_of_week#3558), isnotnull(PULocationID#3544), isnotnull(hour_of_day#3556)]
+      :                       :                       +- InMemoryRelation [PULocationID#3544, pickup_date#3555, hour_of_day#3556, trip_count#3557L, day_of_week#3558], StorageLevel(disk, memory, deserialized, 1 replicas)
+      :                       :                             +- AdaptiveSparkPlan isFinalPlan=true
+                                                               +- == Final Plan ==
+                                                                  ResultQueryStage 1
+                                                                  +- *(2) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                                                     +- ShuffleQueryStage 0
+                                                                        +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5969]
+                                                                           +- *(1) HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                                              +- *(1) Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                                                 +- *(1) Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                                                    +- *(1) ColumnarToRow
+                                                                                       +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+                                                               +- == Initial Plan ==
+                                                                  HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[count(1)], output=[PULocationID#461, pickup_date#3458, hour_of_day#3459, trip_count#3460L, day_of_week#3475])
+                                                                  +- Exchange hashpartitioning(PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, 24), ENSURE_REQUIREMENTS, [plan_id=5708]
+                                                                     +- HashAggregate(keys=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477], functions=[partial_count(1)], output=[PULocationID#461, _groupingexpression#3476, _groupingexpression#3477, count#3479L])
+                                                                        +- Project [PULocationID#461, cast(tpep_pickup_datetime#459 as date) AS _groupingexpression#3476, hour(tpep_pickup_datetime#459, Some(Etc/UTC)) AS _groupingexpression#3477]
+                                                                           +- Filter ((((isnotnull(tpep_pickup_datetime#459) AND isnotnull(year#470)) AND isnotnull(month#471)) AND (year(cast(tpep_pickup_datetime#459 as date)) = year#470)) AND (month(cast(tpep_pickup_datetime#459 as date)) = month#471))
+                                                                              +- FileScan parquet [tpep_pickup_datetime#459,PULocationID#461,year#470,month#471] Batched: true, DataFilters: [isnotnull(tpep_pickup_datetime#459), isnotnull(year#470), isnotnull(month#471), (year(cast(tpep_..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/sc_w2/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(tpep_pickup_datetime), IsNotNull(year), IsNotNull(month)], ReadSchema: struct<tpep_pickup_datetime:timestamp,PULocationID:int,year:int,month:int>
+      :                       +- Sort [day_of_week#3505 ASC NULLS FIRST], false, 0
+      :                          +- Exchange hashpartitioning(day_of_week#3505, 24), ENSURE_REQUIREMENTS, [plan_id=6948]
+      :                             +- Filter isnotnull(day_of_week#3505)
+      :                                +- Scan ExistingRDD[day_of_week#3505,n_days#3506]
+      +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=6964]
+         +- Project [LocationID#0 AS PULocationID#3539, Zone#2 AS zone#3540, Borough#1 AS borough#3541, service_zone#3]
+            +- Filter isnotnull(LocationID#0)
+               +- FileScan csv [LocationID#0,Borough#1,Zone#2,service_zone#3] Batched: false, DataFilters: [isnotnull(LocationID#0)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string,service_zone:string>
+

@@ -1,0 +1,143 @@
+######## info 14:45
+Thu Nov  5 14:45:31 WET 2026
+Darwin Mac.lan 25.6.0 Darwin Kernel Version 25.6.0: Tue Aug 18 17:51:33 PDT 2026; root:xnu-12377.161.15.700.19~2/RELEASE_ARM64_T8132 arm64
+Apple M4
+10
+10
+17179869184
+Docker VM: 10 CPUs, 8217059328 bytes
+workers 3 [(2, 1500), (2, 1500), (2, 1500)]
+######## main 14:45
+== main ronda 1
+[14:45:32] baseline (2019) corrida 1/1 
+    exit 0 | TOTAL 127.1s
+[14:47:46] materialize (2019) corrida 1/1 
+    exit 0 | TOTAL 106.5s
+[14:49:38] mat_agg (2019) corrida 1/1 
+    exit 0 | TOTAL 98.5s
+[14:51:22] final (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 173.0s
+== main ronda 2
+[14:54:20] baseline (2019) corrida 1/1 
+    exit 0 | TOTAL 138.7s
+[14:56:45] materialize (2019) corrida 1/1 
+    exit 0 | TOTAL 109.5s
+[14:58:40] mat_agg (2019) corrida 1/1 
+    exit 0 | TOTAL 96.0s
+[15:00:21] final (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 90.5s
+== main ronda 3
+[15:01:56] baseline (2019) corrida 1/1 
+    exit 0 | TOTAL 172.8s
+[15:04:54] materialize (2019) corrida 1/1 
+    exit 0 | TOTAL 220.4s
+[15:08:45] mat_agg (2019) corrida 1/1 
+    exit 0 | TOTAL 164.4s
+[15:11:40] final (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 247.9s
+######## cache 15:15
+[15:15:56] cache (2019) corrida 1/1 
+    exit 1 | Traceback (most recent call last):
+######## ab 15:18
+== ab ronda 1
+[15:18:20] ab_A (2019) corrida 1/1 
+    exit 0 | TOTAL 86.7s
+[15:19:52] ab_B (2019) corrida 1/1 
+    exit 0 | TOTAL 101.0s
+[15:21:38] ab_C (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 83.4s
+[15:23:07] ab_D (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 84.5s
+== ab ronda 2
+[15:24:36] ab_A (2019) corrida 1/1 
+    exit 0 | TOTAL 117.0s
+[15:26:38] ab_B (2019) corrida 1/1 
+    exit 0 | TOTAL 140.0s
+[15:29:05] ab_C (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 93.7s
+[15:30:45] ab_D (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 94.6s
+== ab ronda 3
+[15:32:26] ab_A (2019) corrida 1/1 
+    exit 0 | TOTAL 90.6s
+[15:34:02] ab_B (2019) corrida 1/1 
+    exit 0 | TOTAL 105.4s
+[15:35:53] ab_C (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 87.7s
+[15:37:26] ab_D (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 89.2s
+######## scaling 15:39
+== ronda 1
+[15:39:02] sc_w3 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 131.1s
+[15:41:20] sc_w2 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 124.6s
+[15:43:31] sc_w1 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 109.2s
+[15:45:31] sc_f0.1 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 61.5s
+[15:46:37] sc_f0.2 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 88.3s
+== ronda 2
+[15:48:12] sc_w3 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 123.3s
+[15:50:23] sc_w2 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 105.2s
+[15:52:14] sc_w1 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 106.9s
+[15:54:11] sc_f0.1 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 55.0s
+[15:55:10] sc_f0.2 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 83.3s
+== ronda 3
+[15:56:39] sc_w3 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 137.1s
+[15:59:04] sc_w2 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 114.8s
+[16:01:05] sc_w1 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 113.8s
+[16:03:11] sc_f0.1 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 71.4s
+[16:04:27] sc_f0.2 (2019) corrida 1/1 spark.sql.shuffle.partitions=24
+    exit 0 | TOTAL 86.0s
+######## check 16:06
+RESULT materialize  m1_stats   linhas 1/1 só-base 0 só-materialize 0 -> IGUAL
+RESULT materialize  m2         linhas 993/993 só-base 1 só-materialize 1 -> DIFERENTE
+RESULT materialize  m3         linhas 3156/3156 só-base 0 só-materialize 0 -> IGUAL
+RESULT materialize  o2/flows   linhas 330699/330699 só-base 0 só-materialize 0 -> IGUAL
+RESULT materialize  o2/top20   linhas 120/120 só-base 0 só-materialize 0 -> IGUAL
+RESULT materialize  o3         linhas 1066428/1066428 só-base 0 só-materialize 0 -> IGUAL
+RESULT mat_agg      m1_stats   linhas 1/1 só-base 0 só-mat_agg 0 -> IGUAL
+RESULT mat_agg      m2         linhas 993/993 só-base 0 só-mat_agg 0 -> IGUAL
+RESULT mat_agg      m3         linhas 3156/3156 só-base 0 só-mat_agg 0 -> IGUAL
+RESULT mat_agg      o2/flows   linhas 330699/330699 só-base 0 só-mat_agg 0 -> IGUAL
+RESULT mat_agg      o2/top20   linhas 120/120 só-base 0 só-mat_agg 0 -> IGUAL
+RESULT mat_agg      o3         linhas 1066428/1066428 só-base 0 só-mat_agg 0 -> IGUAL
+RESULT final        m1_stats   linhas 1/1 só-base 0 só-final 0 -> IGUAL
+RESULT final        m2         linhas 993/993 só-base 1 só-final 1 -> DIFERENTE
+RESULT final        m3         linhas 3156/3156 só-base 0 só-final 0 -> IGUAL
+RESULT final        o2/flows   linhas 330699/330699 só-base 0 só-final 0 -> IGUAL
+RESULT final        o2/top20   linhas 120/120 só-base 0 só-final 0 -> IGUAL
+RESULT final        o3         linhas 1066428/1066428 só-base 0 só-final 0 -> IGUAL
+RESULT ab_C         m1_stats   linhas 1/1 só-base 0 só-ab_C 0 -> IGUAL
+RESULT ab_C         o2/flows   linhas 330699/330699 só-base 0 só-ab_C 0 -> IGUAL
+RESULT ab_C         o2/top20   linhas 120/120 só-base 0 só-ab_C 0 -> IGUAL
+RESULT ab_C         o3         linhas 1066428/1066428 só-base 0 só-ab_C 0 -> IGUAL
+| config | n | total (s) | M1 (s) | M2 (s) | M3 (s) | O2 (s) | O3 (s) | shuffle write (MB) | input records (M) |
+|---|---|---|---|---|---|---|---|---|---|
+| ab_A-2019 | 3 | 91 | 58 | nan | nan | 14 | 16 | 111.3 | 520 |
+| ab_B-2019 | 3 | 105 | 60 | nan | nan | 26 | 19 | 194.0 | 331 |
+| ab_C-2019 | 3 | 88 | 61 | nan | nan | 14 | 11 | 117.5 | 331 |
+| ab_D-2019 | 3 | 89 | 61 | nan | nan | 12 | 15 | 103.0 | 520 |
+| baseline-2019 | 3 | 139 | 16 | 15 | 16 | 46 | 40 | 122.0 | 621 |
+| final-2019 | 3 | 173 | 126 | 13 | 11 | 11 | 11 | 117.5 | 492 |
+| mat_agg-2019 | 3 | 99 | 56 | 9 | 8 | 10 | 14 | 94.0 | 681 |
+| materialize-2019 | 3 | 110 | 54 | 10 | 9 | 21 | 16 | 149.3 | 681 |
+| sc_f0.1-2019 | 3 | 62 | 34 | 4 | 5 | 9 | 7 | 63.1 | 202 |
+| sc_f0.2-2019 | 3 | 86 | 47 | 6 | 8 | 10 | 10 | 77.4 | 234 |
+| sc_w1-2019 | 3 | 109 | 68 | 10 | 10 | 9 | 10 | 117.4 | 492 |
+| sc_w2-2019 | 3 | 115 | 69 | 11 | 9 | 10 | 11 | 119.3 | 492 |
+| sc_w3-2019 | 3 | 131 | 70 | 15 | 10 | 14 | 13 | 119.3 | 492 |
+
+Corridas individuais (total s): ab_A-2019: 87, 117, 91; ab_B-2019: 101, 140, 105; ab_C-2019: 83, 94, 88; ab_D-2019: 85, 95, 89; baseline-2019: 127, 139, 173; final-2019: 173, 91, 248; mat_agg-2019: 99, 96, 164; materialize-2019: 107, 110, 220; sc_f0.1-2019: 62, 55, 71; sc_f0.2-2019: 88, 83, 86; sc_w1-2019: 109, 107, 114; sc_w2-2019: 125, 105, 115; sc_w3-2019: 131, 123, 137
+######## fim 16:07

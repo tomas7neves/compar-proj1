@@ -1,0 +1,411 @@
+== Parsed Logical Plan ==
+'Join UsingJoin(Inner, [PULocationID, DOLocationID])
+:- Filter (route_rank#971 <= 20)
+:  +- Project [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L, route_rank#971]
+:     +- Project [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L, route_rank#971, route_rank#971]
+:        +- Window [row_number() windowspecdefinition(pu_borough#932, total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#971], [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST]
+:           +- Project [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L]
+:              +- Aggregate [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935], [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, sum(trip_count#936L) AS total_trips#959L]
+:                 +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, share#956]
+:                    +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, _we0#958L, (cast(trip_count#936L as double) / cast(_we0#958L as double)) AS share#956]
+:                       +- Window [sum(trip_count#936L) windowspecdefinition(PULocationID#461, year#470, month#471, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#958L], [PULocationID#461, year#470, month#471]
+:                          +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935]
+:                             +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935]
+:                                +- Join Inner, (DOLocationID#462 = DOLocationID#933)
+:                                   :- Project [PULocationID#461, DOLocationID#462, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932]
+:                                   :  +- Join Inner, (PULocationID#461 = PULocationID#930)
+:                                   :     :- Aggregate [PULocationID#461, DOLocationID#462, year#470, month#471], [PULocationID#461, DOLocationID#462, year#470, month#471, count(1) AS trip_count#936L]
+:                                   :     :  +- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+:                                   :     +- Project [LocationID#0 AS PULocationID#930, Zone#2 AS pu_zone#931, Borough#1 AS pu_borough#932]
+:                                   :        +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+:                                   +- Project [LocationID#951 AS DOLocationID#933, Zone#953 AS do_zone#934, Borough#952 AS do_borough#935]
+:                                      +- Relation [LocationID#951,Borough#952,Zone#953,service_zone#954] csv
++- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, ((q1_trend#1100 * q3_trend#1101) < cast(0 as double)) AS share_reversal#1102]
+   +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, (share_sep#1099 - share_jul#1098) AS q3_trend#1101]
+      +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, (share_mar#1097 - share_jan#1096) AS q1_trend#1100]
+         +- Project [PULocationID#1105, DOLocationID#1106, year#1040, 1#1092 AS share_jan#1096, 3#1093 AS share_mar#1097, 7#1094 AS share_jul#1098, 9#1095 AS share_sep#1099]
+            +- Project [PULocationID#1105, DOLocationID#1106, year#1040, coalesce(nanvl(1#1028, cast(null as double)), cast(0.0 as double)) AS 1#1092, coalesce(nanvl(3#1029, cast(null as double)), cast(0.0 as double)) AS 3#1093, coalesce(nanvl(7#1030, cast(null as double)), cast(0.0 as double)) AS 7#1094, coalesce(nanvl(9#1031, cast(null as double)), cast(0.0 as double)) AS 9#1095]
+               +- Project [PULocationID#1105, DOLocationID#1106, year#1040, 1#1028, 3#1029, 7#1030, 9#1031]
+                  +- Join LeftOuter, (((PULocationID#1105 = PULocationID#1043) AND (DOLocationID#1106 = DOLocationID#1044)) AND (year#1040 = year#1052))
+                     :- Join Cross
+                     :  :- Project [PULocationID#1105, DOLocationID#1106]
+                     :  :  +- Filter (route_rank#1134 <= 20)
+                     :  :     +- Project [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, total_trips#1133L, route_rank#1134]
+                     :  :        +- Project [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, total_trips#1133L, route_rank#1134, route_rank#1134]
+                     :  :           +- Window [row_number() windowspecdefinition(pu_borough#1123, total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1134], [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST]
+                     :  :              +- Project [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, total_trips#1133L]
+                     :  :                 +- Aggregate [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130], [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, sum(trip_count#1116L) AS total_trips#1133L]
+                     :  :                    +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130, share#1132]
+                     :  :                       +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130, _we0#1131L, (cast(trip_count#1116L as double) / cast(_we0#1131L as double)) AS share#1132]
+                     :  :                          +- Window [sum(trip_count#1116L) windowspecdefinition(PULocationID#1105, year#1114, month#1115, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1131L], [PULocationID#1105, year#1114, month#1115]
+                     :  :                             +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130]
+                     :  :                                +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130]
+                     :  :                                   +- Join Inner, (DOLocationID#1106 = DOLocationID#1128)
+                     :  :                                      :- Project [PULocationID#1105, DOLocationID#1106, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123]
+                     :  :                                      :  +- Join Inner, (PULocationID#1105 = PULocationID#1121)
+                     :  :                                      :     :- Aggregate [PULocationID#1105, DOLocationID#1106, year#1114, month#1115], [PULocationID#1105, DOLocationID#1106, year#1114, month#1115, count(1) AS trip_count#1116L]
+                     :  :                                      :     :  +- Relation [tpep_pickup_datetime#1103,tpep_dropoff_datetime#1104,PULocationID#1105,DOLocationID#1106,passenger_count#1107,trip_distance#1108,RatecodeID#1109,payment_type#1110,fare_amount#1111,tip_amount#1112,total_amount#1113,year#1114,month#1115] parquet
+                     :  :                                      :     +- Project [LocationID#1117 AS PULocationID#1121, Zone#1119 AS pu_zone#1122, Borough#1118 AS pu_borough#1123]
+                     :  :                                      :        +- Relation [LocationID#1117,Borough#1118,Zone#1119,service_zone#1120] csv
+                     :  :                                      +- Project [LocationID#1124 AS DOLocationID#1128, Zone#1126 AS do_zone#1129, Borough#1125 AS do_borough#1130]
+                     :  :                                         +- Relation [LocationID#1124,Borough#1125,Zone#1126,service_zone#1127] csv
+                     :  +- LogicalRDD [year#1040], false
+                     +- Project [PULocationID#1043, DOLocationID#1044, year#1052, __pivot_first(share) AS `first(share)`#1027[0] AS 1#1028, __pivot_first(share) AS `first(share)`#1027[1] AS 3#1029, __pivot_first(share) AS `first(share)`#1027[2] AS 7#1030, __pivot_first(share) AS `first(share)`#1027[3] AS 9#1031]
+                        +- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052], [PULocationID#1043, DOLocationID#1044, year#1052, pivotfirst(month#1053, first(share)#1017, 1, 3, 7, 9, 0, 0) AS __pivot_first(share) AS `first(share)`#1027]
+                           +- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052, month#1053], [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, first(share#1070, false) AS first(share)#1017]
+                              +- Filter month#1053 IN (1,3,7,9)
+                                 +- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068, share#1070]
+                                    +- Join Inner, ((PULocationID#1043 = PULocationID#975) AND (DOLocationID#1044 = DOLocationID#976))
+                                       :- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068, share#1070]
+                                       :  +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068, _we0#1069L, (cast(trip_count#1054L as double) / cast(_we0#1069L as double)) AS share#1070]
+                                       :     +- Window [sum(trip_count#1054L) windowspecdefinition(PULocationID#1043, year#1052, month#1053, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1069L], [PULocationID#1043, year#1052, month#1053]
+                                       :        +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068]
+                                       :           +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068]
+                                       :              +- Join Inner, (DOLocationID#1044 = DOLocationID#1066)
+                                       :                 :- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061]
+                                       :                 :  +- Join Inner, (PULocationID#1043 = PULocationID#1059)
+                                       :                 :     :- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052, month#1053], [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, count(1) AS trip_count#1054L]
+                                       :                 :     :  +- Relation [tpep_pickup_datetime#1041,tpep_dropoff_datetime#1042,PULocationID#1043,DOLocationID#1044,passenger_count#1045,trip_distance#1046,RatecodeID#1047,payment_type#1048,fare_amount#1049,tip_amount#1050,total_amount#1051,year#1052,month#1053] parquet
+                                       :                 :     +- Project [LocationID#1055 AS PULocationID#1059, Zone#1057 AS pu_zone#1060, Borough#1056 AS pu_borough#1061]
+                                       :                 :        +- Relation [LocationID#1055,Borough#1056,Zone#1057,service_zone#1058] csv
+                                       :                 +- Project [LocationID#1062 AS DOLocationID#1066, Zone#1064 AS do_zone#1067, Borough#1063 AS do_borough#1068]
+                                       :                    +- Relation [LocationID#1062,Borough#1063,Zone#1064,service_zone#1065] csv
+                                       +- Project [PULocationID#975, DOLocationID#976]
+                                          +- Filter (route_rank#1072 <= 20)
+                                             +- Project [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, total_trips#1071L, route_rank#1072]
+                                                +- Project [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, total_trips#1071L, route_rank#1072, route_rank#1072]
+                                                   +- Window [row_number() windowspecdefinition(pu_borough#993, total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1072], [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST]
+                                                      +- Project [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, total_trips#1071L]
+                                                         +- Aggregate [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000], [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, sum(trip_count#986L) AS total_trips#1071L]
+                                                            +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000, share#1002]
+                                                               +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000, _we0#1001L, (cast(trip_count#986L as double) / cast(_we0#1001L as double)) AS share#1002]
+                                                                  +- Window [sum(trip_count#986L) windowspecdefinition(PULocationID#975, year#984, month#985, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1001L], [PULocationID#975, year#984, month#985]
+                                                                     +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000]
+                                                                        +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000]
+                                                                           +- Join Inner, (DOLocationID#976 = DOLocationID#998)
+                                                                              :- Project [PULocationID#975, DOLocationID#976, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993]
+                                                                              :  +- Join Inner, (PULocationID#975 = PULocationID#991)
+                                                                              :     :- Aggregate [PULocationID#975, DOLocationID#976, year#984, month#985], [PULocationID#975, DOLocationID#976, year#984, month#985, count(1) AS trip_count#986L]
+                                                                              :     :  +- Relation [tpep_pickup_datetime#973,tpep_dropoff_datetime#974,PULocationID#975,DOLocationID#976,passenger_count#977,trip_distance#978,RatecodeID#979,payment_type#980,fare_amount#981,tip_amount#982,total_amount#983,year#984,month#985] parquet
+                                                                              :     +- Project [LocationID#987 AS PULocationID#991, Zone#989 AS pu_zone#992, Borough#988 AS pu_borough#993]
+                                                                              :        +- Relation [LocationID#987,Borough#988,Zone#989,service_zone#990] csv
+                                                                              +- Project [LocationID#994 AS DOLocationID#998, Zone#996 AS do_zone#999, Borough#995 AS do_borough#1000]
+                                                                                 +- Relation [LocationID#994,Borough#995,Zone#996,service_zone#997] csv
+
+== Analyzed Logical Plan ==
+PULocationID: int, DOLocationID: int, pu_zone: string, pu_borough: string, do_zone: string, do_borough: string, total_trips: bigint, route_rank: int, year: int, share_jan: double, share_mar: double, share_jul: double, share_sep: double, q1_trend: double, q3_trend: double, share_reversal: boolean
+Project [PULocationID#461, DOLocationID#462, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, total_trips#959L, route_rank#971, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, share_reversal#1102]
++- Join Inner, ((PULocationID#461 = PULocationID#1105) AND (DOLocationID#462 = DOLocationID#1106))
+   :- Filter (route_rank#971 <= 20)
+   :  +- Project [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L, route_rank#971]
+   :     +- Project [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L, route_rank#971, route_rank#971]
+   :        +- Window [row_number() windowspecdefinition(pu_borough#932, total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#971], [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST]
+   :           +- Project [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L]
+   :              +- Aggregate [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935], [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, sum(trip_count#936L) AS total_trips#959L]
+   :                 +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, share#956]
+   :                    +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, _we0#958L, (cast(trip_count#936L as double) / cast(_we0#958L as double)) AS share#956]
+   :                       +- Window [sum(trip_count#936L) windowspecdefinition(PULocationID#461, year#470, month#471, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#958L], [PULocationID#461, year#470, month#471]
+   :                          +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935]
+   :                             +- Project [DOLocationID#462, PULocationID#461, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935]
+   :                                +- Join Inner, (DOLocationID#462 = DOLocationID#933)
+   :                                   :- Project [PULocationID#461, DOLocationID#462, year#470, month#471, trip_count#936L, pu_zone#931, pu_borough#932]
+   :                                   :  +- Join Inner, (PULocationID#461 = PULocationID#930)
+   :                                   :     :- Aggregate [PULocationID#461, DOLocationID#462, year#470, month#471], [PULocationID#461, DOLocationID#462, year#470, month#471, count(1) AS trip_count#936L]
+   :                                   :     :  +- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+   :                                   :     +- Project [LocationID#0 AS PULocationID#930, Zone#2 AS pu_zone#931, Borough#1 AS pu_borough#932]
+   :                                   :        +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+   :                                   +- Project [LocationID#951 AS DOLocationID#933, Zone#953 AS do_zone#934, Borough#952 AS do_borough#935]
+   :                                      +- Relation [LocationID#951,Borough#952,Zone#953,service_zone#954] csv
+   +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, ((q1_trend#1100 * q3_trend#1101) < cast(0 as double)) AS share_reversal#1102]
+      +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, (share_sep#1099 - share_jul#1098) AS q3_trend#1101]
+         +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, (share_mar#1097 - share_jan#1096) AS q1_trend#1100]
+            +- Project [PULocationID#1105, DOLocationID#1106, year#1040, 1#1092 AS share_jan#1096, 3#1093 AS share_mar#1097, 7#1094 AS share_jul#1098, 9#1095 AS share_sep#1099]
+               +- Project [PULocationID#1105, DOLocationID#1106, year#1040, coalesce(nanvl(1#1028, cast(null as double)), cast(0.0 as double)) AS 1#1092, coalesce(nanvl(3#1029, cast(null as double)), cast(0.0 as double)) AS 3#1093, coalesce(nanvl(7#1030, cast(null as double)), cast(0.0 as double)) AS 7#1094, coalesce(nanvl(9#1031, cast(null as double)), cast(0.0 as double)) AS 9#1095]
+                  +- Project [PULocationID#1105, DOLocationID#1106, year#1040, 1#1028, 3#1029, 7#1030, 9#1031]
+                     +- Join LeftOuter, (((PULocationID#1105 = PULocationID#1043) AND (DOLocationID#1106 = DOLocationID#1044)) AND (year#1040 = year#1052))
+                        :- Join Cross
+                        :  :- Project [PULocationID#1105, DOLocationID#1106]
+                        :  :  +- Filter (route_rank#1134 <= 20)
+                        :  :     +- Project [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, total_trips#1133L, route_rank#1134]
+                        :  :        +- Project [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, total_trips#1133L, route_rank#1134, route_rank#1134]
+                        :  :           +- Window [row_number() windowspecdefinition(pu_borough#1123, total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1134], [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST]
+                        :  :              +- Project [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, total_trips#1133L]
+                        :  :                 +- Aggregate [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130], [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, sum(trip_count#1116L) AS total_trips#1133L]
+                        :  :                    +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130, share#1132]
+                        :  :                       +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130, _we0#1131L, (cast(trip_count#1116L as double) / cast(_we0#1131L as double)) AS share#1132]
+                        :  :                          +- Window [sum(trip_count#1116L) windowspecdefinition(PULocationID#1105, year#1114, month#1115, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1131L], [PULocationID#1105, year#1114, month#1115]
+                        :  :                             +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130]
+                        :  :                                +- Project [DOLocationID#1106, PULocationID#1105, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130]
+                        :  :                                   +- Join Inner, (DOLocationID#1106 = DOLocationID#1128)
+                        :  :                                      :- Project [PULocationID#1105, DOLocationID#1106, year#1114, month#1115, trip_count#1116L, pu_zone#1122, pu_borough#1123]
+                        :  :                                      :  +- Join Inner, (PULocationID#1105 = PULocationID#1121)
+                        :  :                                      :     :- Aggregate [PULocationID#1105, DOLocationID#1106, year#1114, month#1115], [PULocationID#1105, DOLocationID#1106, year#1114, month#1115, count(1) AS trip_count#1116L]
+                        :  :                                      :     :  +- Relation [tpep_pickup_datetime#1103,tpep_dropoff_datetime#1104,PULocationID#1105,DOLocationID#1106,passenger_count#1107,trip_distance#1108,RatecodeID#1109,payment_type#1110,fare_amount#1111,tip_amount#1112,total_amount#1113,year#1114,month#1115] parquet
+                        :  :                                      :     +- Project [LocationID#1117 AS PULocationID#1121, Zone#1119 AS pu_zone#1122, Borough#1118 AS pu_borough#1123]
+                        :  :                                      :        +- Relation [LocationID#1117,Borough#1118,Zone#1119,service_zone#1120] csv
+                        :  :                                      +- Project [LocationID#1124 AS DOLocationID#1128, Zone#1126 AS do_zone#1129, Borough#1125 AS do_borough#1130]
+                        :  :                                         +- Relation [LocationID#1124,Borough#1125,Zone#1126,service_zone#1127] csv
+                        :  +- LogicalRDD [year#1040], false
+                        +- Project [PULocationID#1043, DOLocationID#1044, year#1052, __pivot_first(share) AS `first(share)`#1027[0] AS 1#1028, __pivot_first(share) AS `first(share)`#1027[1] AS 3#1029, __pivot_first(share) AS `first(share)`#1027[2] AS 7#1030, __pivot_first(share) AS `first(share)`#1027[3] AS 9#1031]
+                           +- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052], [PULocationID#1043, DOLocationID#1044, year#1052, pivotfirst(month#1053, first(share)#1017, 1, 3, 7, 9, 0, 0) AS __pivot_first(share) AS `first(share)`#1027]
+                              +- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052, month#1053], [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, first(share#1070, false) AS first(share)#1017]
+                                 +- Filter month#1053 IN (1,3,7,9)
+                                    +- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068, share#1070]
+                                       +- Join Inner, ((PULocationID#1043 = PULocationID#975) AND (DOLocationID#1044 = DOLocationID#976))
+                                          :- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068, share#1070]
+                                          :  +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068, _we0#1069L, (cast(trip_count#1054L as double) / cast(_we0#1069L as double)) AS share#1070]
+                                          :     +- Window [sum(trip_count#1054L) windowspecdefinition(PULocationID#1043, year#1052, month#1053, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1069L], [PULocationID#1043, year#1052, month#1053]
+                                          :        +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068]
+                                          :           +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061, do_zone#1067, do_borough#1068]
+                                          :              +- Join Inner, (DOLocationID#1044 = DOLocationID#1066)
+                                          :                 :- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L, pu_zone#1060, pu_borough#1061]
+                                          :                 :  +- Join Inner, (PULocationID#1043 = PULocationID#1059)
+                                          :                 :     :- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052, month#1053], [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, count(1) AS trip_count#1054L]
+                                          :                 :     :  +- Relation [tpep_pickup_datetime#1041,tpep_dropoff_datetime#1042,PULocationID#1043,DOLocationID#1044,passenger_count#1045,trip_distance#1046,RatecodeID#1047,payment_type#1048,fare_amount#1049,tip_amount#1050,total_amount#1051,year#1052,month#1053] parquet
+                                          :                 :     +- Project [LocationID#1055 AS PULocationID#1059, Zone#1057 AS pu_zone#1060, Borough#1056 AS pu_borough#1061]
+                                          :                 :        +- Relation [LocationID#1055,Borough#1056,Zone#1057,service_zone#1058] csv
+                                          :                 +- Project [LocationID#1062 AS DOLocationID#1066, Zone#1064 AS do_zone#1067, Borough#1063 AS do_borough#1068]
+                                          :                    +- Relation [LocationID#1062,Borough#1063,Zone#1064,service_zone#1065] csv
+                                          +- Project [PULocationID#975, DOLocationID#976]
+                                             +- Filter (route_rank#1072 <= 20)
+                                                +- Project [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, total_trips#1071L, route_rank#1072]
+                                                   +- Project [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, total_trips#1071L, route_rank#1072, route_rank#1072]
+                                                      +- Window [row_number() windowspecdefinition(pu_borough#993, total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1072], [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST]
+                                                         +- Project [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, total_trips#1071L]
+                                                            +- Aggregate [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000], [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, sum(trip_count#986L) AS total_trips#1071L]
+                                                               +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000, share#1002]
+                                                                  +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000, _we0#1001L, (cast(trip_count#986L as double) / cast(_we0#1001L as double)) AS share#1002]
+                                                                     +- Window [sum(trip_count#986L) windowspecdefinition(PULocationID#975, year#984, month#985, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1001L], [PULocationID#975, year#984, month#985]
+                                                                        +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000]
+                                                                           +- Project [DOLocationID#976, PULocationID#975, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000]
+                                                                              +- Join Inner, (DOLocationID#976 = DOLocationID#998)
+                                                                                 :- Project [PULocationID#975, DOLocationID#976, year#984, month#985, trip_count#986L, pu_zone#992, pu_borough#993]
+                                                                                 :  +- Join Inner, (PULocationID#975 = PULocationID#991)
+                                                                                 :     :- Aggregate [PULocationID#975, DOLocationID#976, year#984, month#985], [PULocationID#975, DOLocationID#976, year#984, month#985, count(1) AS trip_count#986L]
+                                                                                 :     :  +- Relation [tpep_pickup_datetime#973,tpep_dropoff_datetime#974,PULocationID#975,DOLocationID#976,passenger_count#977,trip_distance#978,RatecodeID#979,payment_type#980,fare_amount#981,tip_amount#982,total_amount#983,year#984,month#985] parquet
+                                                                                 :     +- Project [LocationID#987 AS PULocationID#991, Zone#989 AS pu_zone#992, Borough#988 AS pu_borough#993]
+                                                                                 :        +- Relation [LocationID#987,Borough#988,Zone#989,service_zone#990] csv
+                                                                                 +- Project [LocationID#994 AS DOLocationID#998, Zone#996 AS do_zone#999, Borough#995 AS do_borough#1000]
+                                                                                    +- Relation [LocationID#994,Borough#995,Zone#996,service_zone#997] csv
+
+== Optimized Logical Plan ==
+Project [PULocationID#461, DOLocationID#462, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, total_trips#959L, route_rank#971, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, share_reversal#1102]
++- Join Inner, ((PULocationID#461 = PULocationID#1105) AND (DOLocationID#462 = DOLocationID#1106))
+   :- Filter (route_rank#971 <= 20)
+   :  +- Window [row_number() windowspecdefinition(pu_borough#932, total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#971], [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST]
+   :     +- WindowGroupLimit [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST], row_number(), 20
+   :        +- Aggregate [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935], [PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, sum(trip_count#936L) AS total_trips#959L]
+   :           +- Project [DOLocationID#462, PULocationID#461, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935]
+   :              +- Join Inner, (DOLocationID#462 = DOLocationID#933)
+   :                 :- Project [PULocationID#461, DOLocationID#462, trip_count#936L, pu_zone#931, pu_borough#932]
+   :                 :  +- Join Inner, (PULocationID#461 = PULocationID#930)
+   :                 :     :- Aggregate [PULocationID#461, DOLocationID#462, year#470, month#471], [PULocationID#461, DOLocationID#462, count(1) AS trip_count#936L]
+   :                 :     :  +- Project [PULocationID#461, DOLocationID#462, year#470, month#471]
+   :                 :     :     +- Filter (isnotnull(PULocationID#461) AND isnotnull(DOLocationID#462))
+   :                 :     :        +- Relation [tpep_pickup_datetime#459,tpep_dropoff_datetime#460,PULocationID#461,DOLocationID#462,passenger_count#463,trip_distance#464,RatecodeID#465,payment_type#466,fare_amount#467,tip_amount#468,total_amount#469,year#470,month#471] parquet
+   :                 :     +- Project [LocationID#0 AS PULocationID#930, Zone#2 AS pu_zone#931, Borough#1 AS pu_borough#932]
+   :                 :        +- Filter isnotnull(LocationID#0)
+   :                 :           +- Relation [LocationID#0,Borough#1,Zone#2,service_zone#3] csv
+   :                 +- Project [LocationID#951 AS DOLocationID#933, Zone#953 AS do_zone#934, Borough#952 AS do_borough#935]
+   :                    +- Filter isnotnull(LocationID#951)
+   :                       +- Relation [LocationID#951,Borough#952,Zone#953,service_zone#954] csv
+   +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, ((q1_trend#1100 * q3_trend#1101) < 0.0) AS share_reversal#1102]
+      +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, (share_mar#1097 - share_jan#1096) AS q1_trend#1100, (share_sep#1099 - share_jul#1098) AS q3_trend#1101]
+         +- Project [PULocationID#1105, DOLocationID#1106, year#1040, coalesce(nanvl(1#1028, null), 0.0) AS share_jan#1096, coalesce(nanvl(3#1029, null), 0.0) AS share_mar#1097, coalesce(nanvl(7#1030, null), 0.0) AS share_jul#1098, coalesce(nanvl(9#1031, null), 0.0) AS share_sep#1099]
+            +- Join LeftOuter, (((PULocationID#1105 = PULocationID#1043) AND (DOLocationID#1106 = DOLocationID#1044)) AND (year#1040 = year#1052))
+               :- Join Cross
+               :  :- Project [PULocationID#1105, DOLocationID#1106]
+               :  :  +- Filter (route_rank#1134 <= 20)
+               :  :     +- Window [row_number() windowspecdefinition(pu_borough#1123, total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1134], [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST]
+               :  :        +- WindowGroupLimit [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST], row_number(), 20
+               :  :           +- Aggregate [PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130], [PULocationID#1105, pu_borough#1123, DOLocationID#1106, sum(trip_count#1116L) AS total_trips#1133L]
+               :  :              +- Project [DOLocationID#1106, PULocationID#1105, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130]
+               :  :                 +- Join Inner, (DOLocationID#1106 = DOLocationID#1128)
+               :  :                    :- Project [PULocationID#1105, DOLocationID#1106, trip_count#1116L, pu_zone#1122, pu_borough#1123]
+               :  :                    :  +- Join Inner, (PULocationID#1105 = PULocationID#1121)
+               :  :                    :     :- Aggregate [PULocationID#1105, DOLocationID#1106, year#1114, month#1115], [PULocationID#1105, DOLocationID#1106, count(1) AS trip_count#1116L]
+               :  :                    :     :  +- Project [PULocationID#1105, DOLocationID#1106, year#1114, month#1115]
+               :  :                    :     :     +- Filter (isnotnull(PULocationID#1105) AND isnotnull(DOLocationID#1106))
+               :  :                    :     :        +- Relation [tpep_pickup_datetime#1103,tpep_dropoff_datetime#1104,PULocationID#1105,DOLocationID#1106,passenger_count#1107,trip_distance#1108,RatecodeID#1109,payment_type#1110,fare_amount#1111,tip_amount#1112,total_amount#1113,year#1114,month#1115] parquet
+               :  :                    :     +- Project [LocationID#1117 AS PULocationID#1121, Zone#1119 AS pu_zone#1122, Borough#1118 AS pu_borough#1123]
+               :  :                    :        +- Filter isnotnull(LocationID#1117)
+               :  :                    :           +- Relation [LocationID#1117,Borough#1118,Zone#1119,service_zone#1120] csv
+               :  :                    +- Project [LocationID#1124 AS DOLocationID#1128, Zone#1126 AS do_zone#1129, Borough#1125 AS do_borough#1130]
+               :  :                       +- Filter isnotnull(LocationID#1124)
+               :  :                          +- Relation [LocationID#1124,Borough#1125,Zone#1126,service_zone#1127] csv
+               :  +- LogicalRDD [year#1040], false
+               +- Project [PULocationID#1043, DOLocationID#1044, year#1052, __pivot_first(share) AS `first(share)`#1027[0] AS 1#1028, __pivot_first(share) AS `first(share)`#1027[1] AS 3#1029, __pivot_first(share) AS `first(share)`#1027[2] AS 7#1030, __pivot_first(share) AS `first(share)`#1027[3] AS 9#1031]
+                  +- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052], [PULocationID#1043, DOLocationID#1044, year#1052, pivotfirst(month#1053, first(share)#1017, 1, 3, 7, 9, 0, 0) AS __pivot_first(share) AS `first(share)`#1027]
+                     +- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052, month#1053], [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, first(share#1070, false) AS first(share)#1017]
+                        +- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, share#1070]
+                           +- Join Inner, ((PULocationID#1043 = PULocationID#975) AND (DOLocationID#1044 = DOLocationID#976))
+                              :- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, (cast(trip_count#1054L as double) / cast(_we0#1069L as double)) AS share#1070]
+                              :  +- Window [sum(trip_count#1054L) windowspecdefinition(PULocationID#1043, year#1052, month#1053, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1069L], [PULocationID#1043, year#1052, month#1053]
+                              :     +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L]
+                              :        +- Join Inner, (DOLocationID#1044 = DOLocationID#1066)
+                              :           :- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L]
+                              :           :  +- Join Inner, (PULocationID#1043 = PULocationID#1059)
+                              :           :     :- Aggregate [PULocationID#1043, DOLocationID#1044, year#1052, month#1053], [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, count(1) AS trip_count#1054L]
+                              :           :     :  +- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053]
+                              :           :     :     +- Filter ((month#1053 IN (1,3,7,9) AND isnotnull(PULocationID#1043)) AND (isnotnull(DOLocationID#1044) AND isnotnull(year#1052)))
+                              :           :     :        +- Relation [tpep_pickup_datetime#1041,tpep_dropoff_datetime#1042,PULocationID#1043,DOLocationID#1044,passenger_count#1045,trip_distance#1046,RatecodeID#1047,payment_type#1048,fare_amount#1049,tip_amount#1050,total_amount#1051,year#1052,month#1053] parquet
+                              :           :     +- Project [LocationID#1055 AS PULocationID#1059]
+                              :           :        +- Filter isnotnull(LocationID#1055)
+                              :           :           +- Relation [LocationID#1055,Borough#1056,Zone#1057,service_zone#1058] csv
+                              :           +- Project [LocationID#1062 AS DOLocationID#1066]
+                              :              +- Filter isnotnull(LocationID#1062)
+                              :                 +- Relation [LocationID#1062,Borough#1063,Zone#1064,service_zone#1065] csv
+                              +- Project [PULocationID#975, DOLocationID#976]
+                                 +- Filter (route_rank#1072 <= 20)
+                                    +- Window [row_number() windowspecdefinition(pu_borough#993, total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1072], [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST]
+                                       +- WindowGroupLimit [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST], row_number(), 20
+                                          +- Aggregate [PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000], [PULocationID#975, pu_borough#993, DOLocationID#976, sum(trip_count#986L) AS total_trips#1071L]
+                                             +- Project [DOLocationID#976, PULocationID#975, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000]
+                                                +- Join Inner, (DOLocationID#976 = DOLocationID#998)
+                                                   :- Project [PULocationID#975, DOLocationID#976, trip_count#986L, pu_zone#992, pu_borough#993]
+                                                   :  +- Join Inner, (PULocationID#975 = PULocationID#991)
+                                                   :     :- Aggregate [PULocationID#975, DOLocationID#976, year#984, month#985], [PULocationID#975, DOLocationID#976, count(1) AS trip_count#986L]
+                                                   :     :  +- Project [PULocationID#975, DOLocationID#976, year#984, month#985]
+                                                   :     :     +- Filter (isnotnull(PULocationID#975) AND isnotnull(DOLocationID#976))
+                                                   :     :        +- Relation [tpep_pickup_datetime#973,tpep_dropoff_datetime#974,PULocationID#975,DOLocationID#976,passenger_count#977,trip_distance#978,RatecodeID#979,payment_type#980,fare_amount#981,tip_amount#982,total_amount#983,year#984,month#985] parquet
+                                                   :     +- Project [LocationID#987 AS PULocationID#991, Zone#989 AS pu_zone#992, Borough#988 AS pu_borough#993]
+                                                   :        +- Filter isnotnull(LocationID#987)
+                                                   :           +- Relation [LocationID#987,Borough#988,Zone#989,service_zone#990] csv
+                                                   +- Project [LocationID#994 AS DOLocationID#998, Zone#996 AS do_zone#999, Borough#995 AS do_borough#1000]
+                                                      +- Filter isnotnull(LocationID#994)
+                                                         +- Relation [LocationID#994,Borough#995,Zone#996,service_zone#997] csv
+
+== Physical Plan ==
+AdaptiveSparkPlan isFinalPlan=false
++- Project [PULocationID#461, DOLocationID#462, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935, total_trips#959L, route_rank#971, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, share_reversal#1102]
+   +- SortMergeJoin [PULocationID#461, DOLocationID#462], [PULocationID#1105, DOLocationID#1106], Inner
+      :- Sort [PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST], false, 0
+      :  +- Exchange hashpartitioning(PULocationID#461, DOLocationID#462, 200), ENSURE_REQUIREMENTS, [plan_id=7177]
+      :     +- Filter (route_rank#971 <= 20)
+      :        +- Window [row_number() windowspecdefinition(pu_borough#932, total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#971], [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST]
+      :           +- WindowGroupLimit [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST], row_number(), 20, Final
+      :              +- Sort [pu_borough#932 ASC NULLS FIRST, total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST], false, 0
+      :                 +- Exchange hashpartitioning(pu_borough#932, 200), ENSURE_REQUIREMENTS, [plan_id=7083]
+      :                    +- WindowGroupLimit [pu_borough#932], [total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST], row_number(), 20, Partial
+      :                       +- Sort [pu_borough#932 ASC NULLS FIRST, total_trips#959L DESC NULLS LAST, PULocationID#461 ASC NULLS FIRST, DOLocationID#462 ASC NULLS FIRST], false, 0
+      :                          +- HashAggregate(keys=[PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935], functions=[sum(trip_count#936L)], output=[PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, total_trips#959L])
+      :                             +- Exchange hashpartitioning(PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, 200), ENSURE_REQUIREMENTS, [plan_id=7077]
+      :                                +- HashAggregate(keys=[PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935], functions=[partial_sum(trip_count#936L)], output=[PULocationID#461, pu_zone#931, pu_borough#932, DOLocationID#462, do_zone#934, do_borough#935, sum#1145L])
+      :                                   +- Project [DOLocationID#462, PULocationID#461, trip_count#936L, pu_zone#931, pu_borough#932, do_zone#934, do_borough#935]
+      :                                      +- BroadcastHashJoin [DOLocationID#462], [DOLocationID#933], Inner, BuildRight, false, false
+      :                                         :- Project [PULocationID#461, DOLocationID#462, trip_count#936L, pu_zone#931, pu_borough#932]
+      :                                         :  +- BroadcastHashJoin [PULocationID#461], [PULocationID#930], Inner, BuildRight, false, false
+      :                                         :     :- HashAggregate(keys=[PULocationID#461, DOLocationID#462, year#470, month#471], functions=[count(1)], output=[PULocationID#461, DOLocationID#462, trip_count#936L])
+      :                                         :     :  +- Exchange hashpartitioning(PULocationID#461, DOLocationID#462, year#470, month#471, 200), ENSURE_REQUIREMENTS, [plan_id=7065]
+      :                                         :     :     +- HashAggregate(keys=[PULocationID#461, DOLocationID#462, year#470, month#471], functions=[partial_count(1)], output=[PULocationID#461, DOLocationID#462, year#470, month#471, count#1140L])
+      :                                         :     :        +- Filter (isnotnull(PULocationID#461) AND isnotnull(DOLocationID#462))
+      :                                         :     :           +- FileScan parquet [PULocationID#461,DOLocationID#462,year#470,month#471] Batched: true, DataFilters: [isnotnull(PULocationID#461), isnotnull(DOLocationID#462)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/mat_agg/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID)], ReadSchema: struct<PULocationID:int,DOLocationID:int,year:int,month:int>
+      :                                         :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7068]
+      :                                         :        +- Project [LocationID#0 AS PULocationID#930, Zone#2 AS pu_zone#931, Borough#1 AS pu_borough#932]
+      :                                         :           +- Filter isnotnull(LocationID#0)
+      :                                         :              +- FileScan csv [LocationID#0,Borough#1,Zone#2] Batched: false, DataFilters: [isnotnull(LocationID#0)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+      :                                         +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7072]
+      :                                            +- Project [LocationID#951 AS DOLocationID#933, Zone#953 AS do_zone#934, Borough#952 AS do_borough#935]
+      :                                               +- Filter isnotnull(LocationID#951)
+      :                                                  +- FileScan csv [LocationID#951,Borough#952,Zone#953] Batched: false, DataFilters: [isnotnull(LocationID#951)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+      +- Sort [PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST], false, 0
+         +- Exchange hashpartitioning(PULocationID#1105, DOLocationID#1106, 200), ENSURE_REQUIREMENTS, [plan_id=7178]
+            +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, q1_trend#1100, q3_trend#1101, ((q1_trend#1100 * q3_trend#1101) < 0.0) AS share_reversal#1102]
+               +- Project [PULocationID#1105, DOLocationID#1106, year#1040, share_jan#1096, share_mar#1097, share_jul#1098, share_sep#1099, (share_mar#1097 - share_jan#1096) AS q1_trend#1100, (share_sep#1099 - share_jul#1098) AS q3_trend#1101]
+                  +- Project [PULocationID#1105, DOLocationID#1106, year#1040, coalesce(nanvl(1#1028, null), 0.0) AS share_jan#1096, coalesce(nanvl(3#1029, null), 0.0) AS share_mar#1097, coalesce(nanvl(7#1030, null), 0.0) AS share_jul#1098, coalesce(nanvl(9#1031, null), 0.0) AS share_sep#1099]
+                     +- SortMergeJoin [PULocationID#1105, DOLocationID#1106, year#1040], [PULocationID#1043, DOLocationID#1044, year#1052], LeftOuter
+                        :- Sort [PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST, year#1040 ASC NULLS FIRST], false, 0
+                        :  +- Exchange hashpartitioning(PULocationID#1105, DOLocationID#1106, year#1040, 200), ENSURE_REQUIREMENTS, [plan_id=7167]
+                        :     +- CartesianProduct
+                        :        :- Project [PULocationID#1105, DOLocationID#1106]
+                        :        :  +- Filter (route_rank#1134 <= 20)
+                        :        :     +- Window [row_number() windowspecdefinition(pu_borough#1123, total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1134], [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST]
+                        :        :        +- WindowGroupLimit [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST], row_number(), 20, Final
+                        :        :           +- Sort [pu_borough#1123 ASC NULLS FIRST, total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST], false, 0
+                        :        :              +- Exchange hashpartitioning(pu_borough#1123, 200), ENSURE_REQUIREMENTS, [plan_id=7106]
+                        :        :                 +- WindowGroupLimit [pu_borough#1123], [total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST], row_number(), 20, Partial
+                        :        :                    +- Sort [pu_borough#1123 ASC NULLS FIRST, total_trips#1133L DESC NULLS LAST, PULocationID#1105 ASC NULLS FIRST, DOLocationID#1106 ASC NULLS FIRST], false, 0
+                        :        :                       +- HashAggregate(keys=[PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130], functions=[sum(trip_count#1116L)], output=[PULocationID#1105, pu_borough#1123, DOLocationID#1106, total_trips#1133L])
+                        :        :                          +- Exchange hashpartitioning(PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, 200), ENSURE_REQUIREMENTS, [plan_id=7100]
+                        :        :                             +- HashAggregate(keys=[PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130], functions=[partial_sum(trip_count#1116L)], output=[PULocationID#1105, pu_zone#1122, pu_borough#1123, DOLocationID#1106, do_zone#1129, do_borough#1130, sum#1147L])
+                        :        :                                +- Project [DOLocationID#1106, PULocationID#1105, trip_count#1116L, pu_zone#1122, pu_borough#1123, do_zone#1129, do_borough#1130]
+                        :        :                                   +- BroadcastHashJoin [DOLocationID#1106], [DOLocationID#1128], Inner, BuildRight, false, false
+                        :        :                                      :- Project [PULocationID#1105, DOLocationID#1106, trip_count#1116L, pu_zone#1122, pu_borough#1123]
+                        :        :                                      :  +- BroadcastHashJoin [PULocationID#1105], [PULocationID#1121], Inner, BuildRight, false, false
+                        :        :                                      :     :- HashAggregate(keys=[PULocationID#1105, DOLocationID#1106, year#1114, month#1115], functions=[count(1)], output=[PULocationID#1105, DOLocationID#1106, trip_count#1116L])
+                        :        :                                      :     :  +- Exchange hashpartitioning(PULocationID#1105, DOLocationID#1106, year#1114, month#1115, 200), ENSURE_REQUIREMENTS, [plan_id=7088]
+                        :        :                                      :     :     +- HashAggregate(keys=[PULocationID#1105, DOLocationID#1106, year#1114, month#1115], functions=[partial_count(1)], output=[PULocationID#1105, DOLocationID#1106, year#1114, month#1115, count#1140L])
+                        :        :                                      :     :        +- Filter (isnotnull(PULocationID#1105) AND isnotnull(DOLocationID#1106))
+                        :        :                                      :     :           +- FileScan parquet [PULocationID#1105,DOLocationID#1106,year#1114,month#1115] Batched: true, DataFilters: [isnotnull(PULocationID#1105), isnotnull(DOLocationID#1106)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/mat_agg/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID)], ReadSchema: struct<PULocationID:int,DOLocationID:int,year:int,month:int>
+                        :        :                                      :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7091]
+                        :        :                                      :        +- Project [LocationID#1117 AS PULocationID#1121, Zone#1119 AS pu_zone#1122, Borough#1118 AS pu_borough#1123]
+                        :        :                                      :           +- Filter isnotnull(LocationID#1117)
+                        :        :                                      :              +- FileScan csv [LocationID#1117,Borough#1118,Zone#1119] Batched: false, DataFilters: [isnotnull(LocationID#1117)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                        :        :                                      +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7095]
+                        :        :                                         +- Project [LocationID#1124 AS DOLocationID#1128, Zone#1126 AS do_zone#1129, Borough#1125 AS do_borough#1130]
+                        :        :                                            +- Filter isnotnull(LocationID#1124)
+                        :        :                                               +- FileScan csv [LocationID#1124,Borough#1125,Zone#1126] Batched: false, DataFilters: [isnotnull(LocationID#1124)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                        :        +- Scan ExistingRDD[year#1040]
+                        +- Sort [PULocationID#1043 ASC NULLS FIRST, DOLocationID#1044 ASC NULLS FIRST, year#1052 ASC NULLS FIRST], false, 0
+                           +- Exchange hashpartitioning(PULocationID#1043, DOLocationID#1044, year#1052, 200), ENSURE_REQUIREMENTS, [plan_id=7168]
+                              +- Project [PULocationID#1043, DOLocationID#1044, year#1052, __pivot_first(share) AS `first(share)`#1027[0] AS 1#1028, __pivot_first(share) AS `first(share)`#1027[1] AS 3#1029, __pivot_first(share) AS `first(share)`#1027[2] AS 7#1030, __pivot_first(share) AS `first(share)`#1027[3] AS 9#1031]
+                                 +- HashAggregate(keys=[PULocationID#1043, DOLocationID#1044, year#1052], functions=[pivotfirst(month#1053, first(share)#1017, 1, 3, 7, 9, 0, 0)], output=[PULocationID#1043, DOLocationID#1044, year#1052, __pivot_first(share) AS `first(share)`#1027])
+                                    +- HashAggregate(keys=[PULocationID#1043, DOLocationID#1044, year#1052], functions=[partial_pivotfirst(month#1053, first(share)#1017, 1, 3, 7, 9, 0, 0)], output=[PULocationID#1043, DOLocationID#1044, year#1052, 1#1077, 3#1078, 7#1079, 9#1080])
+                                       +- HashAggregate(keys=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053], functions=[first(share#1070, false)], output=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053, first(share)#1017])
+                                          +- HashAggregate(keys=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053], functions=[partial_first(share#1070, false)], output=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053, first#1150, valueSet#1151])
+                                             +- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, share#1070]
+                                                +- SortMergeJoin [PULocationID#1043, DOLocationID#1044], [PULocationID#975, DOLocationID#976], Inner
+                                                   :- Sort [PULocationID#1043 ASC NULLS FIRST, DOLocationID#1044 ASC NULLS FIRST], false, 0
+                                                   :  +- Exchange hashpartitioning(PULocationID#1043, DOLocationID#1044, 200), ENSURE_REQUIREMENTS, [plan_id=7154]
+                                                   :     +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, (cast(trip_count#1054L as double) / cast(_we0#1069L as double)) AS share#1070]
+                                                   :        +- Window [sum(trip_count#1054L) windowspecdefinition(PULocationID#1043, year#1052, month#1053, specifiedwindowframe(RowFrame, unboundedpreceding$(), unboundedfollowing$())) AS _we0#1069L], [PULocationID#1043, year#1052, month#1053]
+                                                   :           +- Sort [PULocationID#1043 ASC NULLS FIRST, year#1052 ASC NULLS FIRST, month#1053 ASC NULLS FIRST], false, 0
+                                                   :              +- Exchange hashpartitioning(PULocationID#1043, year#1052, month#1053, 200), ENSURE_REQUIREMENTS, [plan_id=7124]
+                                                   :                 +- Project [DOLocationID#1044, PULocationID#1043, year#1052, month#1053, trip_count#1054L]
+                                                   :                    +- BroadcastHashJoin [DOLocationID#1044], [DOLocationID#1066], Inner, BuildRight, false, false
+                                                   :                       :- Project [PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L]
+                                                   :                       :  +- BroadcastHashJoin [PULocationID#1043], [PULocationID#1059], Inner, BuildRight, false, false
+                                                   :                       :     :- HashAggregate(keys=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053], functions=[count(1)], output=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053, trip_count#1054L])
+                                                   :                       :     :  +- Exchange hashpartitioning(PULocationID#1043, DOLocationID#1044, year#1052, month#1053, 200), ENSURE_REQUIREMENTS, [plan_id=7113]
+                                                   :                       :     :     +- HashAggregate(keys=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053], functions=[partial_count(1)], output=[PULocationID#1043, DOLocationID#1044, year#1052, month#1053, count#1140L])
+                                                   :                       :     :        +- Filter (((month#1053 IN (1,3,7,9) AND isnotnull(PULocationID#1043)) AND isnotnull(DOLocationID#1044)) AND isnotnull(year#1052))
+                                                   :                       :     :           +- FileScan parquet [PULocationID#1043,DOLocationID#1044,year#1052,month#1053] Batched: true, DataFilters: [month#1053 IN (1,3,7,9), isnotnull(PULocationID#1043), isnotnull(DOLocationID#1044), isnotnull(y..., Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/mat_agg/m1_trips], PartitionFilters: [], PushedFilters: [In(month, [1,3,7,9]), IsNotNull(PULocationID), IsNotNull(DOLocationID), IsNotNull(year)], ReadSchema: struct<PULocationID:int,DOLocationID:int,year:int,month:int>
+                                                   :                       :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7116]
+                                                   :                       :        +- Project [LocationID#1055 AS PULocationID#1059]
+                                                   :                       :           +- Filter isnotnull(LocationID#1055)
+                                                   :                       :              +- FileScan csv [LocationID#1055] Batched: false, DataFilters: [isnotnull(LocationID#1055)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int>
+                                                   :                       +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7120]
+                                                   :                          +- Project [LocationID#1062 AS DOLocationID#1066]
+                                                   :                             +- Filter isnotnull(LocationID#1062)
+                                                   :                                +- FileScan csv [LocationID#1062] Batched: false, DataFilters: [isnotnull(LocationID#1062)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int>
+                                                   +- Sort [PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST], false, 0
+                                                      +- Exchange hashpartitioning(PULocationID#975, DOLocationID#976, 200), ENSURE_REQUIREMENTS, [plan_id=7155]
+                                                         +- Project [PULocationID#975, DOLocationID#976]
+                                                            +- Filter (route_rank#1072 <= 20)
+                                                               +- Window [row_number() windowspecdefinition(pu_borough#993, total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS route_rank#1072], [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST]
+                                                                  +- WindowGroupLimit [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST], row_number(), 20, Final
+                                                                     +- Sort [pu_borough#993 ASC NULLS FIRST, total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST], false, 0
+                                                                        +- Exchange hashpartitioning(pu_borough#993, 200), ENSURE_REQUIREMENTS, [plan_id=7146]
+                                                                           +- WindowGroupLimit [pu_borough#993], [total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST], row_number(), 20, Partial
+                                                                              +- Sort [pu_borough#993 ASC NULLS FIRST, total_trips#1071L DESC NULLS LAST, PULocationID#975 ASC NULLS FIRST, DOLocationID#976 ASC NULLS FIRST], false, 0
+                                                                                 +- HashAggregate(keys=[PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000], functions=[sum(trip_count#986L)], output=[PULocationID#975, pu_borough#993, DOLocationID#976, total_trips#1071L])
+                                                                                    +- Exchange hashpartitioning(PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, 200), ENSURE_REQUIREMENTS, [plan_id=7140]
+                                                                                       +- HashAggregate(keys=[PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000], functions=[partial_sum(trip_count#986L)], output=[PULocationID#975, pu_zone#992, pu_borough#993, DOLocationID#976, do_zone#999, do_borough#1000, sum#1153L])
+                                                                                          +- Project [DOLocationID#976, PULocationID#975, trip_count#986L, pu_zone#992, pu_borough#993, do_zone#999, do_borough#1000]
+                                                                                             +- BroadcastHashJoin [DOLocationID#976], [DOLocationID#998], Inner, BuildRight, false, false
+                                                                                                :- Project [PULocationID#975, DOLocationID#976, trip_count#986L, pu_zone#992, pu_borough#993]
+                                                                                                :  +- BroadcastHashJoin [PULocationID#975], [PULocationID#991], Inner, BuildRight, false, false
+                                                                                                :     :- HashAggregate(keys=[PULocationID#975, DOLocationID#976, year#984, month#985], functions=[count(1)], output=[PULocationID#975, DOLocationID#976, trip_count#986L])
+                                                                                                :     :  +- Exchange hashpartitioning(PULocationID#975, DOLocationID#976, year#984, month#985, 200), ENSURE_REQUIREMENTS, [plan_id=7128]
+                                                                                                :     :     +- HashAggregate(keys=[PULocationID#975, DOLocationID#976, year#984, month#985], functions=[partial_count(1)], output=[PULocationID#975, DOLocationID#976, year#984, month#985, count#1140L])
+                                                                                                :     :        +- Filter (isnotnull(PULocationID#975) AND isnotnull(DOLocationID#976))
+                                                                                                :     :           +- FileScan parquet [PULocationID#975,DOLocationID#976,year#984,month#985] Batched: true, DataFilters: [isnotnull(PULocationID#975), isnotnull(DOLocationID#976)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/project/output/bench/mat_agg/m1_trips], PartitionFilters: [], PushedFilters: [IsNotNull(PULocationID), IsNotNull(DOLocationID)], ReadSchema: struct<PULocationID:int,DOLocationID:int,year:int,month:int>
+                                                                                                :     +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7131]
+                                                                                                :        +- Project [LocationID#987 AS PULocationID#991, Zone#989 AS pu_zone#992, Borough#988 AS pu_borough#993]
+                                                                                                :           +- Filter isnotnull(LocationID#987)
+                                                                                                :              +- FileScan csv [LocationID#987,Borough#988,Zone#989] Batched: false, DataFilters: [isnotnull(LocationID#987)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+                                                                                                +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)),false), [plan_id=7135]
+                                                                                                   +- Project [LocationID#994 AS DOLocationID#998, Zone#996 AS do_zone#999, Borough#995 AS do_borough#1000]
+                                                                                                      +- Filter isnotnull(LocationID#994)
+                                                                                                         +- FileScan csv [LocationID#994,Borough#995,Zone#996] Batched: false, DataFilters: [isnotnull(LocationID#994)], Format: CSV, Location: InMemoryFileIndex(1 paths)[file:/project/data/taxi_zone_lookup.csv], PartitionFilters: [], PushedFilters: [IsNotNull(LocationID)], ReadSchema: struct<LocationID:int,Borough:string,Zone:string>
+
