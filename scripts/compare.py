@@ -1,6 +1,6 @@
 # scripts/compare.py - compara as saídas de cada config com a baseline (exceptAll nos dois sentidos, doubles arredondados).
 # Uso: docker exec spark-master spark-submit /project/scripts/compare.py <config> [<config> ...]   (pastas em output/bench/)
-import sys
+import os, sys
 from pyspark.sql import SparkSession, functions as F
 from pyspark.sql.types import DoubleType, FloatType
 spark = SparkSession.builder.appName("compare").getOrCreate()
@@ -11,6 +11,8 @@ def norm(df):
                       for c in sorted(df.schema.fields, key=lambda f: f.name)])
 for cfg in sys.argv[1:]:
     for o in outs:
+        if not os.path.exists(f"{base}/{cfg}/{o}"):
+            continue                                   # corrida só com algumas ops (OPS=...)
         rd = spark.read.json if o == "m1_stats" else spark.read.parquet
         a = norm(rd(f"{base}/baseline/{o}")); b = norm(rd(f"{base}/{cfg}/{o}"))
         na, nb = a.count(), b.count()

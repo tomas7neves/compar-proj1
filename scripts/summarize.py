@@ -1,5 +1,5 @@
 # scripts/summarize.py - junta as métricas de results/metrics/ numa tabela por configuração (mediana das corridas).
-# Uso: python3 scripts/summarize.py [results/metrics]  -> imprime Markdown e grava results/summary.md
+# Uso: python3 scripts/summarize.py [<dir>/metrics]  -> imprime Markdown e grava <dir>/summary.md
 import glob, json, statistics, sys
 from collections import defaultdict
 
@@ -27,4 +27,4 @@ out.append("Corridas individuais (total s): " + "; ".join(
     f"{n}: " + ", ".join(f"{m['total_s']:.0f}" for m in ms) for n, ms in runs.items()))
 txt = "\n".join(out)
 print(txt)
-open("results/summary.md", "w").write(txt + "\n")
+open(f"{d.rstrip('/').rsplit('/', 1)[0]}/summary.md", "w").write(txt + "\n")

@@ -75,7 +75,70 @@ Plano: sem cache, cada operação volta a ler e limpar os 12 ficheiros (O2 lê-o
   `materialize` dá o mesmo benefício (ler uma vez limpo) sem ocupar o heap.
 - O teste pequeno (1 mês) também foi mais lento do que a baseline: M2 200 s contra 161 s, O2 257 s contra 132 s.
 
+## Medição intercalada (OPT-4 e OPT-5)
+
+Os totais variavam muito de hora para hora: a M2, sem nenhuma mudança, deu 23 s numa série e 58 s noutra. Por isso
+a OPT-4 e a OPT-5 foram medidas **intercaladas** (A, B, C, D, A, B, C, D, …, 3 rondas, `OPS=O2,O3`) e todas as
+configurações apanharam as mesmas condições. A M1 é igual nas 4 e deu ~180 s em A, B e C, o que confirma que as
+condições foram parecidas.
+
+| config | O2 (s) | O2 CPU (s) | O2 tasks | O3 (s) | O3 CPU (s) | O3 tasks | O2+O3 (s) |
+|---|---|---|---|---|---|---|---|
+| A `materialize,agg_first` | 57 | 102 | 262 | 60 | 188 | 164 | 117 |
+| B A + `cache_agg` | 113 | 143 | 2811 | 50 | 112 | 2485 | 163 |
+| C B + `shuffle.partitions=24` | **40** | **60** | 560 | **36** | **93** | 313 | **76** |
+| D A + `shuffle.partitions=24` | 64 | 123 | 219 | 44 | 139 | 174 | 108 |
+
+Leituras das viagens (input records): A e D 188,8 M (O2) / 161,6 M (O3); B e C 80,8 M em ambas (1 leitura).
+
+## OPT-4 `cache_agg`: guardar em cache só os intermédios pequenos
+
+- **Observação.** Mesmo com OPT-1+2, o plano da O2 lê as viagens 4× e o da O3 3× (input records 2,3× e 2× o
+  dataset). O `flows` (O2) e as contagens por hora `c` (O3) são reutilizados mas recalculados em cada uso.
+- **Hipótese.** Guardá-los em cache (~330 k e ~1 M linhas, cabem na memória ao contrário da OPT-3) baixa cada
+  operação para 1 leitura.
+- **Mudança.** `--opt cache_agg`: `flows.cache()` em `o2_flows.py`, `c.cache()` em `o3_forecast.py`.
+- **Resultado.** As leituras baixaram como previsto (O2 188,8 → 80,8 M registos), mas a **O2 ficou 2× mais lenta**
+  (57 → 113 s) e a O3 só ganhou 10 s. O número de tasks subiu de 262 para 2811.
+- **Diagnóstico** (plano `ab_B-2019-O2.txt`). No plano guardado em cache, o último shuffle (o da window da quota)
+  fica em `hashpartitioning(..., 200)` **sem** `AQEShuffleRead coalesced`, ao contrário dos outros shuffles. A AQE
+  preserva as partições de um plano guardado em cache. Assim, a cache fica com 200 partições minúsculas e cada uma
+  das 4 leituras dela gera 200 tasks, cada uma com o seu custo fixo de arranque. Leva à OPT-5.
+
+## OPT-5 `spark.sql.shuffle.partitions=24` (com a OPT-4)
+
+- **Observação.** O que a OPT-4 deixou: ~2800 tasks na O2, por causa das 200 partições fixas da cache.
+- **Hipótese.** O valor por omissão (200) é para clusters grandes. Temos 6 cores e os dados agregados têm poucos MB.
+  Com 24 partições (4 por core) a cache fica em partições de tamanho útil. A AQE continua ligada e junta o resto.
+  Segue a dica do professor no Piazza (a AQE "often struggles", ajudar com `shuffle.partitions`).
+- **Mudança.** `CONF="spark.sql.shuffle.partitions=24"` no `spark-submit`, sem mudar o código.
+- **Resultado** (C contra A): O2 57 → 40 s (CPU 102 → 60 s), O3 60 → 36 s (CPU 188 → 93 s), **O2+O3 117 → 76 s
+  (−35 %)**. Tasks: O2 2811 → 560.
+- **Controlo (D).** As 24 partições sem cache quase não mudam nada (O2+O3 108 s contra 117 s, dentro do ruído): sem
+  cache, a AQE já juntava as 200 partições sozinha. **O ganho vem da combinação das duas:** a cache tira as releituras
+  e as 24 partições tiram o custo que a cache trazia.
+- **Correção.** `scripts/compare.py ab_C`: O2 (flows, top20) e O3 iguais à baseline.
+
 ## Não medido
 
 - Pipeline completo 2016-2020: estimativa de mais de 1 h por corrida e ~8 GB de disco para o `materialize`. O Mac
   tinha 19 GB livres e pouca memória.
+
+## Escalabilidade (configuração final OPT-1,2,4,5)
+
+`scripts/scaling.sh`: rondas intercaladas com 3, 2 e 1 workers (2019 completo), e depois 10 % e 20 % com 3 workers.
+A 3.ª ronda foi parada quando o Mac ficou sem memória, por isso w1 e as frações têm 2 corridas e w3/w2 têm 3.
+
+| | total (s) | M1 (s) | paralelismo efetivo M1 | run time M1 (s) | CPU M1 (s) |
+|---|---|---|---|---|---|
+| 1 worker | 344 | 211 | 1,8 | 387 | 273 |
+| 2 workers | 313 | 174 | 3,5 | 593 | 374 |
+| 3 workers | 286 | 164 | 4,9 | 822 | 444 |
+| 10 % (3 w) | 187 | 108 | | | |
+| 20 % (3 w) | 161 | 87 | | | |
+
+- Speedup com 3 workers: 1,20 (eficiência 40 %); com 2: 1,10 (55 %). O Spark usa os slots (o paralelismo sobe), mas
+  o tempo total dos executores sobe na mesma proporção: os 3 "nós" partilham 4 cores físicos, um SSD e a pasta
+  partilhada do Docker. Mais workers dão mais slots, não mais hardware.
+- 10× mais dados custam só 1,5× mais tempo. O `--fraction` amostra depois de ler, por isso a M1 lê sempre tudo. Cada
+  operação tem custos fixos (20–46 stages, 300–500 tasks), e as saídas são agregados limitados pelo nº de zonas.

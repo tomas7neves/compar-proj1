@@ -1,7 +1,7 @@
 # AI usage (draft for the report's extra page)
 
 Tool: **Claude Code** (Anthropic CLI agent, model Claude Opus) running on Tomás's laptop, with shell access to the
-repository and to the local Docker Spark cluster. Hugo used his own AI agent (details: TODO Hugo).
+repository and to the local Docker Spark cluster. Hugo used his own Claude Code sessions (see "Hugo's AI usage" below).
 Sessions: 2026-10-08 → 2026-11-03 (transcripts kept locally; the prompts below are quoted from them, translated from
 Portuguese, originals in *italics*).
 
@@ -75,7 +75,7 @@ The AI also caught measurement problems we would otherwise have reported wrongly
 
 ## Limits / what we checked ourselves
 - Every number in the report comes from `results/metrics/*.json`, produced by our profiler, not from the AI.
-- The AI's first synthetic test for O3 was wrong (13 Mondays instead of 12 in Q1 2019); we found and fixed it.
+- Claude Code (Tomás's sessions) first wrote a synthetic O3 test expecting 13 Mondays in Q1 2019 (there are 12). The test failed and we fixed the expected value. Separately, the text of `o3-explorar.ipynb` said 13 and Hugo corrected it.
 - Hugo's notebooks were written with his agent and never executed by him. We audited them before merging.
 
 ## Hugo's AI usage

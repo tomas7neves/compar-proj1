@@ -3,13 +3,15 @@
 \renewcommand\footnotetextcopyrightpermission[1]{}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
 \begin{document}
 \title{Performance Engineering of a PySpark Pipeline on NYC Yellow Taxi Trips}
 
 \author{Tomás Neves}
-\email{\todo{email Tomás}}
+\email{tmb.neves@campus.fct.unl.pt}
 \author{Hugo Feteira}
 \email{h.feteira@campus.fct.unl.pt}
 
@@ -20,7 +22,7 @@ demand-forecast features). Starting from a 1398\,s baseline on a 3-worker Docker
 found that the TLC files hold a single Parquet row group each, which caps read parallelism at one task per file.
 We also found that every operation re-reads and re-cleans the raw data. Materialising the cleaned trips with small
 row groups, aggregating before lookup joins, and caching only small reused intermediates bring the pipeline to
-\todo{final}\,s. Caching the full trip table instead crashed the executors with out-of-memory errors.
+286\,s ($-$80\,\%). Caching the full trip table instead crashed the executors with out-of-memory errors.
 \end{abstract}
 
 \keywords{Apache Spark, performance engineering, data skew, Parquet, caching}
@@ -29,7 +31,7 @@ row groups, aggregating before lookup joins, and caching only small reused inter
 %--------------------------------------------------------------------
 \section{Introduction}
 \textbf{Dataset.} NYC TLC Yellow Taxi trip records, one Parquet file per month. We measure on 2019 (12 files,
-84.6\,M trips, \todo{GB}). \textbf{Tasks.} M1 cleaning with per-criterion removal counts; M2 trips and mean
+84.6\,M trips, 1.2\,GB). \textbf{Tasks.} M1 cleaning with per-criterion removal counts; M2 trips and mean
 fare/duration/distance per (borough, weekday, hour); M3 monthly zone ranking with a 3-month rolling share and
 volume-anomaly flags; O2 origin--destination flows, the top-20 routes per borough, and routes whose share
 reverses direction between Q1 and Q3; O3 demand features per (zone, weekday, hour): historical mean and variance,
@@ -55,7 +57,31 @@ dividing by the calendar count of each weekday, so hours without trips count as 
 self-join on \texttt{date\_add(28)}; the demand flag needs a mean $\ge$1 trip per hour.
 \textbf{Decisions.} We used the DataFrame API throughout: it composes with Python helpers (the rule dictionary,
 the \texttt{--opt} switches) and produces the same Catalyst plans as SQL.
-\todo{Figure: simplified physical plan of O2 (Exchange / BroadcastHashJoin / Window).}
+Figure~\ref{fig:plan} shows the physical plan of the O2 top-20 branch with OPT-2.
+
+\begin{figure}[h]
+\begin{scriptsize}
+\begin{verbatim}
+SortMergeJoin [PU, DO]                  <- top-20 x quotas
++- Exchange hashpartitioning(PU, DO)
+   +- Filter route_rank <= 20
+      +- Window row_number (pu_borough)  <- top-20
+         +- Exchange hashpartitioning(pu_borough)
+            +- HashAggregate sum(trip_count) (route)
+               +- Window sum(trip_count) (PU, year, month)
+                  +- Exchange hashpartitioning(PU, year, month)
+                     +- BroadcastHashJoin DO <- zones (csv)
+                        +- BroadcastHashJoin PU <- zones (csv)
+                           +- HashAggregate count (PU,DO,year,month)
+                              +- Exchange hashpartitioning(...)
+                                 +- HashAggregate (partial)
+                                    +- FileScan parquet [4 cols]
+\end{verbatim}
+\end{scriptsize}
+\caption{Simplified physical plan of O2 with OPT-2 (aggregation below the broadcast joins). Without OPT-4, this
+whole subtree is executed again for each use of \texttt{flows}.}
+\label{fig:plan}
+\end{figure}
 
 %--------------------------------------------------------------------
 \section{Profiling and Baseline}
@@ -115,12 +141,35 @@ trips are several times their 1.5\,GB Parquet size. OPT-1 gives the same reuse w
 \emph{Bottleneck:} even with OPT-1, the O2 plan scans the trips 4$\times$ and the O3 plan 3$\times$.
 \texttt{flows} and the per-hour counts are reused but recomputed for each use. \emph{Hypothesis:} caching them
 (330\,k and $\approx$1\,M rows) cuts each operation to one scan. \emph{Change:} \texttt{--opt cache\_agg}.
-\emph{Result:} input records O2 188.8$\to$80.8\,M and O3 161.6$\to$80.8\,M. Side effect: the cached data keeps
-200 shuffle partitions, which raises O2 to 2983 tasks and its shuffle to 102\,MB. \todo{wall times vs.\ the re-run
-of OPT-1+2 under the same load}.
+\emph{Result} (interleaved runs, Table~\ref{tab:ab}): input records dropped as expected (O2
+188.8$\to$80.8\,M), but \textbf{O2 got 2$\times$ slower} (57$\to$113\,s) and its task count rose from 262 to 2811.
+\emph{Diagnosis:} inside the cached plan, the last shuffle (the share window) stays at
+\texttt{hashpartitioning(\dots, 200)} with no \texttt{AQEShuffleRead coalesced}. AQE keeps the output partitioning
+of a cached plan, so the cache holds 200 tiny partitions, and each of its 4 scans launches 200 tasks.
 
-\subsection{OPT-5: shuffle partitions and AQE}
-\todo{spark.sql.shuffle.partitions / advisoryPartitionSizeInBytes, to fix the 200 partitions of OPT-4}
+\subsection{OPT-5: right-size shuffle partitions for the cache}
+\emph{Bottleneck:} the 200-partition cache of OPT-4. \emph{Hypothesis:} the default of 200 suits large clusters. We
+have 6 cores and a few MB of aggregated data, so 24 partitions (4 per core) give useful partition sizes, and AQE
+still coalesces the remaining shuffles. \emph{Change:} \texttt{spark.sql.shuffle.partitions=24}, with no code
+change. \emph{Result:} O2+O3 117$\to$76\,s ($-$35\,\%); O2 CPU 102$\to$60\,s; O2 tasks 2811$\to$560.
+\emph{Control:} 24 partitions \emph{without} the cache (D) change little (108\,s), because AQE already coalesced
+those shuffles. The gain needs both changes: the cache removes the re-reads, and the partition setting removes the
+overhead the cache added. Outputs are identical to the baseline.
+
+\begin{table}[h]
+\caption{OPT-4/5, interleaved runs (A,B,C,D$\times$3), median, 2019.}
+\label{tab:ab}
+\begin{tabular}{lrrrr}
+\toprule
+config & O2 (s) & O2 tasks & O3 (s) & O2+O3 (s) \\
+\midrule
+A: OPT-1+2 & 57 & 262 & 60 & 117 \\
+B: A + OPT-4 & 113 & 2811 & 50 & 163 \\
+C: B + OPT-5 & \textbf{40} & 560 & \textbf{36} & \textbf{76} \\
+D: A + OPT-5 & 64 & 219 & 44 & 108 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{table}[h]
 \caption{Summary of optimisations (2019, median of 3 runs).}
@@ -133,30 +182,106 @@ baseline & 1398 & -- & \\
 + OPT-1 materialize & 661 & $-$53\,\% & \\
 + OPT-2 agg\_first & 567 & $-$59\,\% & O2 $-$50\,\% \\
 OPT-3 cache & fail & -- & OOM, rejected \\
-+ OPT-4 cache\_agg & \todo{} & & \\
-+ OPT-5 & \todo{} & & \\
++ OPT-4 cache\_agg & -- & & O2+O3 $+$39\,\% alone \\
++ OPT-5 partitions=24 & 286$^{*}$ & $-$80\,\% & O2+O3 $-$35\,\% \\
 \bottomrule
 \end{tabular}
+
+\smallskip
+{\footnotesize $^{*}$Measured on a different day from the baseline (scaling runs, 3 workers). OPT-4/5 were compared
+on O2+O3 in interleaved runs (Table~\ref{tab:ab}), which is the fair comparison.}
 \end{table}
 
 %--------------------------------------------------------------------
 \section{Analysis}
-\todo{Dataset scale: 10\,\%, 20\,\%, 100\,\% of 2019 with the best configuration. Chart: time vs.\ fraction.}
-\todo{Cluster size: 1, 2, 3 workers. Speedup, efficiency, why it is not linear.}
+Final configuration (OPT-1,2,4,5), full pipeline, interleaved rounds (3/2/1 workers, then 10\,\%/20\,\% with
+3 workers). Median of 3 runs; 1 worker and the fractions have 2 runs each, because the third round was stopped when the
+host ran out of memory.
+
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{axis}[width=0.52\columnwidth, height=3.6cm, xlabel={workers (2 cores each)}, ylabel={speedup},
+  xtick={1,2,3}, ymin=0, ymax=3.2, legend style={font=\tiny, at={(0.02,0.98)}, anchor=north west},
+  label style={font=\scriptsize}, tick label style={font=\scriptsize}]
+\addplot[dashed, gray] coordinates {(1,1) (2,2) (3,3)}; \addlegendentry{ideal}
+\addplot[mark=*, blue] coordinates {(1,1) (2,1.10) (3,1.20)}; \addlegendentry{measured}
+\end{axis}
+\end{tikzpicture}\hfill
+\begin{tikzpicture}
+\begin{axis}[width=0.52\columnwidth, height=3.6cm, xlabel={fraction of 2019}, ylabel={time (s)},
+  xtick={0.1,0.2,1}, ymin=0, ymax=320, legend style={font=\tiny, at={(0.02,0.98)}, anchor=north west},
+  label style={font=\scriptsize}, tick label style={font=\scriptsize}]
+\addplot[dashed, gray] coordinates {(0.1,28.6) (1,286)}; \addlegendentry{linear}
+\addplot[mark=*, blue] coordinates {(0.1,187) (0.2,161) (1,286)}; \addlegendentry{total}
+\addplot[mark=square*, red] coordinates {(0.1,108) (0.2,87) (1,164)}; \addlegendentry{M1}
+\end{axis}
+\end{tikzpicture}
+\caption{Left: speedup over 1 worker (1: 344\,s, 2: 313\,s, 3: 286\,s). Right: run time against dataset fraction.}
+\label{fig:scaling}
+\end{figure}
+
+\textbf{Cluster size.} Going from 1 to 3 workers gives a speedup of 1.20 (efficiency 40\,\%); 2 workers give 1.10
+(55\,\%). Spark does use the extra slots: the effective parallelism of M1 (executor run time / wall time) rises
+from 1.8 to 3.5 and then 4.9. But the \emph{total} executor run time rises with it, from 387 to 593 to 822\,s, and
+the CPU time from 273 to 444\,s. The work does not change, so each task gets about 2$\times$ slower as workers are
+added. The cause is the testbed: the three ``nodes'' are containers on one 6-vCPU VM, on a laptop with 4 physical
+cores (8 hyper-threads), one SSD, and data on a Docker bind mount. Adding a worker adds task slots, not hardware, so
+the shared cores, memory bandwidth and file-sharing I/O saturate. The CPU/run-time ratio of M1 falls from 0.71 to
+0.54, so tasks spend more time waiting for I/O. On a real cluster the same code would also gain from the extra
+disks and network.
+
+\textbf{Dataset scale.} A 10$\times$ larger input costs only 1.5$\times$ more time (187$\to$286\,s): strongly
+sublinear. There are three reasons. (1)~\texttt{--fraction} samples \emph{after} the scan, so M1 always reads all
+84.6\,M records, and M1 is most of the run time at small fractions. (2)~Fixed costs: each operation runs 20--46 stages
+and 300--500 tasks whatever the input size, so scheduling and JVM overhead dominate at 8\,M rows. (3)~The outputs are
+aggregates bounded by 263 zones $\times$ 7 days $\times$ 24 hours (or months), so the shuffles and writes after the
+first aggregation hardly shrink. M2--O3 together take 73\,s at 10\,\% and 114\,s at 100\,\%. The 10\,\% run being
+slower than the 20\,\% run is within the run-to-run noise.
 
 %--------------------------------------------------------------------
 \section{Discussion}
-\todo{Remaining bottlenecks (O3 self-join, which could be a window lag), methodology limits (shared VM, noise,
-single machine), what we would do with more time (the full 2016--2020 range).}
+\textbf{Remaining bottlenecks.} M1 is now about 57\,\% of the run time (164 of 286\,s). It reads the raw files twice
+(statistics, then the materialised write), and their single row group still limits it to one task per file. The
+O3 lag is a self-join that needs a shuffle and a \texttt{SortMergeJoin}. A \texttt{lag} window with
+\texttt{rangeBetween} on the date would avoid the join. The O2 plan still shows three \texttt{SortMergeJoin}s between small aggregates.
+We did not check whether AQE turns them into broadcast joins at run time.
+\textbf{Methodology limits.} All measurements come from one laptop shared with unrelated containers. Wall times varied
+by up to $\pm$40\,\% between identical runs, so we used medians, interleaved runs, and load-independent metrics
+(input records, tasks, shuffle bytes). Some series have only 2 runs. Speedup on co-located containers measures the
+contention on one machine, not the scaling of a cluster.
+\textbf{With more time} we would: run the full 2016--2020 range (5$\times$ the data) and the DI cluster; compute the
+M1 statistics and the materialised write in one pass; sample by file rather than after the scan; and tune
+\texttt{advisoryPartitionSizeInBytes} and the skew-join thresholds, since Manhattan zones dominate the keys.
 
 %--------------------------------------------------------------------
 \newpage
 \section*{Acknowledgements and AI usage}
-\todo{from docs/ai-usage.md}
+We used Claude Code (Anthropic, model Claude Opus) as a tutor and pair programmer. Full disclosure, with all
+prompts quoted from the session transcripts, is in \texttt{docs/ai-usage.md}.
+\textbf{Agent.} No custom agent was built. We used Claude Code with fixed rules:
+\begin{itemize}
+  \item Tomás: code is given in small blocks with a line-by-line explanation, and he runs each block; follow the
+    lecture and lab material; never commit with the AI's signature; never commit the data.
+  \item Hugo: a global instruction file (no AI signature; sub-agents work in separate worktrees and never merge or
+    push).
+\end{itemize}
+\textbf{Development.} The AI helped plan the project from the assignment, build the Docker cluster and write the
+M1/M2/O2 code with Tomás block by block. It wrote the M3/O2/O3 notebooks with Hugo and tested them on synthetic data.
+It also audited Hugo's notebooks, which found 2 O2 bugs that Hugo then fixed. Example prompts: ``give me the code,
+I will do it, but explain everything and the reason for each thing''; ``fetch Hugo's commits and do a full audit''.
+Design decisions were ours, for example the top-20 period and the low-volume threshold.
+\textbf{Optimisation.} The AI ran the benchmarks (\texttt{scripts/run.sh}, \texttt{scaling.sh}) and read the plans
+and metrics with us. It implemented each optimisation behind an \texttt{--opt} flag and checked the outputs
+against the baseline. The analysis for each optimisation is in Section~4: OPT-1 came from the read-stage skew and
+partition IDs, OPT-2 from the O2 plan, OPT-3 from the OOM log, OPT-4 from the scan counts and input records, and
+OPT-5 from the missing \texttt{AQEShuffleRead} in the cached plan. The AI also flagged measurement noise and
+proposed the interleaved runs. Prompts: ``do you want to test it and see if we can optimise something?'', ``more
+optimisation strategies for the report?''. Every number comes from our profiler output in \texttt{results/}.
 
 \section*{Individual contributions}
-\textbf{Tomás Neves (50\,\%):} \todo{Tomás: environment, data, M1, M2, profiler, O2/O3 integration,
-optimisation and measurements; confirm the 50/50 split proposed by Hugo.}
+\textbf{Tomás Neves (50\,\%):} Docker cluster and data; M1 and M2; the profiler and \texttt{main.py}; audit of
+M3/O2/O3 and their integration into the pipeline; all optimisations and measurements (\texttt{run.sh},
+\texttt{scaling.sh}, \texttt{compare.py}).
 \textbf{Hugo Feteira (50\,\%):} M3 (module and step-by-step notebook); O2 and O3 notebooks (design and logic,
 later integrated by Tomás); fix of the two O2 bugs found in the audit; synthetic tests and answers to the audit.
 
