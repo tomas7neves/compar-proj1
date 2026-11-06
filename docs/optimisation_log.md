@@ -142,3 +142,24 @@ A 3.ª ronda foi parada quando o Mac ficou sem memória, por isso w1 e as fraç�
   partilhada do Docker. Mais workers dão mais slots, não mais hardware.
 - 10× mais dados custam só 1,5× mais tempo. O `--fraction` amostra depois de ler, por isso a M1 lê sempre tudo. Cada
   operação tem custos fixos (20–46 stages, 300–500 tasks), e as saídas são agregados limitados pelo nº de zonas.
+
+## Medições finais no PC do Hugo (Apple M4) — números do relatório
+
+`scripts/bench_all.sh` (fases info, main, cache, ab, scaling, check), resultados em `results-hugo/`. Apple M4 (10 cores),
+16 GB, Docker VM 10 CPUs / 8,2 GB, mesma topologia (3 workers × 2 cores × 1500 MB), sem outros contentores.
+Todas as saídas iguais à baseline (`results-hugo/compare.txt`; M2 com a diferença de ~1e-14 já conhecida).
+
+| | baseline | OPT-1 | OPT-1+2 |
+|---|---|---|---|
+| total (s) | 139 | 110 (−21 %) | 99 (−29 %) |
+| M1 / M2 / M3 / O2 / O3 (s) | 16 / 15 / 16 / 46 / 40 | 54 / 10 / 9 / 21 / 16 | 56 / 9 / 8 / 10 / 14 |
+
+- OPT-1: M2–O3 117 → 56 s (−52 %), mas a escrita de 1,5 GB na pasta partilhada (bind mount) põe a M1 de 16 para 54 s.
+- OPT-3 (`cache`): OutOfMemoryError no stage 17, como no portátil.
+- Intercaladas (O2+O3): A 30 s, B 45 s (+50 %, 2983 tasks), C 25 s (−17 %; O3 16 → 11 s), D 27 s.
+- Configuração final em corridas completas: 91, 173, 248 s. A M1 (só escrita/leitura na pasta partilhada) é a fonte do
+  ruído (56 vs 126 s com o mesmo código na mesma ronda); o ganho de ~5 s da OPT-4+5 fica abaixo do ruído.
+- Escalabilidade: 1/2/3 workers = 109/115/131 s (speedup 0,95 e 0,83). M1 fica em 68–70 s com paralelismo 1,8 → 5,0;
+  CPU de M2–O3 sobe de 55 para 175 s para o mesmo trabalho (shuffles entre contentores, coordenação).
+- Dados: 10 % / 20 % / 100 % = 62 / 86 / 131 s (10× dados → 2,1× tempo).
+- Comparação: no Intel o gargalo era o trabalho de CPU (ganho −80 %); no M4 é o movimento de dados pela pasta partilhada.

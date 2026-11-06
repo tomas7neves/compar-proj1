@@ -22,7 +22,7 @@ def parse():
     p.add_argument("--months", default="1-12")         # smoke test: --months 1-1
     p.add_argument("--fraction", type=float, default=1.0)
     p.add_argument("--ops", default="M1,M2,M3,O2,O3")
-    p.add_argument("--opt", default="")                # ex: cache,agg_first,broadcast
+    p.add_argument("--opt", default="")                # ex: materialize,agg_first,cache_agg (ou cache)
     p.add_argument("--output", default="/project/output")
     p.add_argument("--run-name", default="baseline")
     p.add_argument("--results", default="/project/results")

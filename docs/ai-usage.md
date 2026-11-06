@@ -2,7 +2,7 @@
 
 Tool: **Claude Code** (Anthropic CLI agent, model Claude Opus) running on Tomás's laptop, with shell access to the
 repository and to the local Docker Spark cluster. Hugo used his own Claude Code sessions (see "Hugo's AI usage" below).
-Sessions: 2026-10-08 → 2026-11-03 (transcripts kept locally; the prompts below are quoted from them, translated from
+Sessions: 2026-10-08 → 2026-11-05 (transcripts kept locally; the prompts below are quoted from them, translated from
 Portuguese, originals in *italics*).
 
 ## Did we develop an agent?
@@ -31,6 +31,8 @@ we set during the project:
 | M1, M2, O2 code | Wrote code in small blocks with an explanation of each line. Tomás ran each block in a notebook. | Tomás |
 | M3, O3 code | Hugo wrote these with his own agent. Claude Code audited them with synthetic tests and found 2 bugs in O2; Hugo fixed them. | Tomás + Hugo |
 | Pipeline files | Moved the notebook code into `o2_flows.py` / `o3_forecast.py`. Added the low-volume threshold. | Tomás |
+| Scripts | Wrote `run.sh`, `bench_all.sh`, `scaling.sh`, `compare.py` and `summarize.py`. | Tomás + Hugo (39 runs) |
+| Report text | Drafted and rewrote `report.tex` from our notes and results (the first version read as "confusing and not very human", so it was rewritten); checked each requirement of the assignment against the report. | Tomás |
 
 Example prompts (development):
 - "I received the project assignment. Read everything we have from the lectures and labs and make an execution plan."

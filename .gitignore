@@ -10,3 +10,7 @@ report/*.log
 report/*.out
 docs/para-o-hugo.md
 docs/notas-tomas.md
+report/report_overleaf.zip
+report/report/*.pdf
+results/logs/*
+!results/logs/cache-2019-1.log
